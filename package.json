@@ -23,7 +23,8 @@
     "prisma:migrate:reset": "npx prisma migrate reset",
     "prisma:studio": "npx prisma studio",
     "prisma:push": "npx prisma db push",
-    "prisma:seed": "npx prisma db seed"
+    "prisma:seed": "npx prisma db seed",
+    "prepare": "husky"
   },
   "prisma": {
     "seed": "ts-node prisma/prisma.seed.ts"
