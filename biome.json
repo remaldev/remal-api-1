@@ -71,10 +71,13 @@
   },
   "files": {
     "include": [
-      "src/**/*.ts",
-      "tests/**/*.spec.ts",
+      "*.ts",
+      "*.json",
+      "tsconfig*.json",
       "prisma/prisma.seed.ts",
-      "tsconfig*.json"
+      "src/**/*.ts",
+      "test/**/*.ts",
+      "test/**/*.json"
     ],
     "ignore": ["node_modules", "dist", "coverage"]
   }
