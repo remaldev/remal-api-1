@@ -1,52 +1,36 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from './user.service';
-import { PrismaService } from '../prisma/prisma.service'; // Import PrismaService to mock
+import { Test, type TestingModule } from '@nestjs/testing'
+import { UserService } from './user.service'
+import { PrismaService } from '../prisma/prisma.service'
+import { UserModule } from './user.module'
+import { PrismaModule } from 'src/prisma/prisma.module'
 
 describe('UserService', () => {
-  let userService: UserService;
-  let prismaService: PrismaService;
+  let userService: UserService
 
   beforeEach(async () => {
     // Create a testing module
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UserService,
-        {
-          provide: PrismaService,
-          useValue: {
-            user: {
-              create: jest.fn().mockResolvedValue({
-                id: 1,
-                name: 'John Doe',
-                email: 'john@example.com',
-              }),
-            },
-          },
-        },
-      ],
-    }).compile();
+      imports: [UserModule, PrismaModule],
+      providers: [UserService, PrismaService],
+    }).compile()
 
-    userService = module.get<UserService>(UserService);
-    prismaService = module.get<PrismaService>(PrismaService);
-  });
+    userService = module.get<UserService>(UserService)
+  })
 
   it('should be defined', () => {
-    expect(userService).toBeDefined();
-  });
+    expect(userService).toBeDefined()
+  })
 
   it('should create a user', async () => {
-    const createUserDto = { name: 'John Doe', email: 'john@example.com' };
+    const createUserDto = { name: 'John Doe', email: 'john@example.com' }
 
-    const result = await userService.createUser(createUserDto);
+    const result = await userService.createUser(createUserDto)
 
     expect(result).toEqual({
-      id: 1,
+      id: expect.any(String),
       name: 'John Doe',
       email: 'john@example.com',
-    });
-    expect(prismaService.user.create).toHaveBeenCalledWith({
-      data: createUserDto,
-    });
-  });
-});
+      createdAt: expect.any(Date),
+    })
+  })
+})
