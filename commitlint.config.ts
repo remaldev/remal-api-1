@@ -35,6 +35,7 @@ module.exports = {
         'ci',
         'deploy',
         'config',
+        'style',
 
         // Testing
         'test',
@@ -48,6 +49,9 @@ module.exports = {
     ],
   },
 };
+
+
+// Examples:
 
 // [FEAT](auth) #AUTH-123 Add JWT authentication strategy
 // [FEAT](user) #USER-456 Implement user registration

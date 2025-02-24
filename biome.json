@@ -16,6 +16,7 @@
         "noUnusedVariables": "error"
       },
       "style": {
+        "useImportType": "off",
         "noNamespace": "error",
         "noNamespaceImport": "error",
         "noNegationElse": "error",
