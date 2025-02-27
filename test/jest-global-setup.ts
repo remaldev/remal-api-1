@@ -11,7 +11,7 @@ async function createPostgresContainer() {
     .withWaitStrategy(Wait.forListeningPorts())
     .start()
 
-  process.env.DATABASE_POSTGRE_URL =
+  process.env.DB_POSTGRE_URL =
     globalThis.postgresContainer.getConnectionUri()
 
   try {
