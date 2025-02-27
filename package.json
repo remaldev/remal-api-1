@@ -18,13 +18,15 @@
     "test:cov": "jest --coverage --config ./test/jest.config.ts",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest.config.ts --selectProjects e2e",
-    "prisma:generate": "npx prisma generate",
-    "prisma:migrate": "npx prisma migrate dev",
-    "prisma:migrate:reset": "npx prisma migrate reset",
-    "prisma:studio": "npx prisma studio",
-    "prisma:push": "npx prisma db push",
-    "prisma:seed": "npx prisma db seed",
-    "prepare": "husky"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:reset": "prisma migrate reset",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "prisma db seed",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prepare": "husky",
+    "deps:check": "npx -y depcheck@1.4.3",
+    "deps:outdated:check": "npx check-outdated --ignore-pre-releases --columns name,current,latest"
   },
   "prisma": {
     "seed": "ts-node prisma/prisma.seed.ts"
