@@ -11,12 +11,10 @@ async function createPostgresContainer() {
     .withWaitStrategy(Wait.forListeningPorts())
     .start()
 
-  process.env.DB_POSTGRE_URL =
-    globalThis.postgresContainer.getConnectionUri()
-
+  process.env.DB_POSTGRE_URI = globalThis.postgresContainer.getConnectionUri()
   try {
-    execSync('npm run prisma:migrate:deploy', { stdio: 'inherit' })
-    execSync('npm run prisma:seed', { stdio: 'inherit' })
+    execSync('npm run prisma:migrate:deploy')
+    execSync('npm run prisma:seed')
   } catch (error) {
     console.error('Migration failed:', error)
     throw error
@@ -28,13 +26,11 @@ async function createMongoContainer() {
     .withExposedPorts(27017)
     .withWaitStrategy(Wait.forListeningPorts())
     .start()
-  process.env.DATABASE_MONGO_URL =
-    globalThis.mongoContainer.getConnectionString()
+  process.env.DB_MONGO_URI = globalThis.mongoContainer.getConnectionString()
 }
 
 async function globalSetup() {
-  dotenv.config({ path: '.env.test' })
-
+  dotenv.config({ path: '.env' })
   await createPostgresContainer()
   await createMongoContainer()
 }
