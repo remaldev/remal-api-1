@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { ValidationPipe } from '@nestjs/common'
+import { LogLevel, ValidationPipe } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+  const configService = app.get(ConfigService)
+
   // Enable global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
@@ -13,8 +16,12 @@ async function bootstrap() {
       transform: true, // Automatically transforms payloads to DTOs
     }),
   )
-  await app.listen(process.env.PORT ?? 3000)
+
+  const logLevel = configService.get<string>('LOG_LEVEL')
+  const port = configService.get<number>('PORT', 3000)
+
+  app.useLogger([logLevel as LogLevel])
+  await app.listen(port)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap()
