@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest.config.ts --selectProjects e2e --detectOpenHandles",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:migrate:reset": "prisma migrate reset",
+    "prisma:migrate:reset": "prisma migrate reset --force",
     "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
     "prisma:migrate:deploy": "prisma migrate deploy",
