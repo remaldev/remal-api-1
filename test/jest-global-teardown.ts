@@ -1,6 +1,8 @@
 async function globalTeardown() {
-  await globalThis.postgresContainer.stop()
-  await globalThis.mongoContainer.stop()
+  if (process.env.CI !== 'true') {
+    await globalThis.postgresContainer.stop()
+    await globalThis.mongoContainer.stop()
+  }
 }
 
 export default globalTeardown
