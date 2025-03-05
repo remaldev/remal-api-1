@@ -1,0 +1,71 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.4
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: uzer
+          POSTGRES_PASSWORD: psswd
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+    
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: |
+            **/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+        
+      - name: Check cache hit
+        run: echo "Cache hit => ${{ steps.npm-cache.outputs.cache-hit }}"
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '23.6.0'
+      - run: sudo apt-get update && sudo apt-get install -y openssl
+      - run: npm install -g npm@11.1.0
+
+      - name: Install dependencies
+        # Only run npm ci if cache miss
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run Prisma Migrations
+        run: npm run prisma:migrate:deploy
+        env:
+          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+
+      - name: Run Jest Tests with Coverage
+        run: npm run test:cov
+        env:
+          CI: true
+          NODE_ENV: test
+          test_DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+
+  # Additional Deployment job can be added once server setup is ready
