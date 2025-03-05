@@ -30,8 +30,10 @@ async function createMongoContainer() {
 
 async function globalSetup() {
   dotenv.config({ path: '.env' })
-  await createPostgresContainer()
-  await createMongoContainer()
+  if (process.env.CI !== 'true') {
+    await createPostgresContainer()
+    await createMongoContainer()
+  }
 }
 
 export default globalSetup
