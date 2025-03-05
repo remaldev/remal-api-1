@@ -13,8 +13,7 @@ async function createPostgresContainer() {
 
   process.env.DB_POSTGRE_URI = globalThis.postgresContainer.getConnectionUri()
   try {
-    execSync('npm run prisma:migrate:deploy')
-    execSync('npm run prisma:seed')
+    execSync('npm run prisma:migrate:reset')
   } catch (error) {
     console.error('Migration failed:', error)
     throw error
