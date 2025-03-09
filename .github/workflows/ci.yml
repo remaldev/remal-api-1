@@ -7,19 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  comment:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      issues: write
-    steps:
-    - name: Comment PR with execution number
-      uses: thollander/actions-comment-pull-request@v3
-      with:
-        message: |
-          _(execution **${{ github.run_id }}** / attempt **${{ github.run_attempt }}**)_
-        comment-tag: execution
-
   setup:
     runs-on: ubuntu-22.04
     steps:
@@ -69,6 +56,9 @@ jobs:
   deps-check:
     needs: lint
     runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -80,8 +70,33 @@ jobs:
             **/node_modules
             ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      
       - name: Check Dependencies
-        run: npm run deps:outdated:check
+        id: deps-check
+        continue-on-error: true
+        run: |
+          npm run deps:outdated:check
+          CHECK_EXIT_CODE=$?
+          if [ $CHECK_EXIT_CODE -ne 0 ]; then
+            npm outdated --json > outdated-packages.json
+            node .github/scripts/comment-bot-deps.js
+            exit 1
+          fi
+          echo "check_status=$CHECK_EXIT_CODE" >> $GITHUB_OUTPUT
+
+      - name: Comment Dependencies outdated warning
+        if: failure() && steps.deps-check.outcome == 'failure'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: outdated-packages-report.md
+          comment-tag: dependency-check
+
+      - name: Delete outdated dependencies comment
+        if: success() && steps.deps-check.outputs.check_status == '0'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: dependency-check
+          mode: delete
 
   test:
     needs: deps-check
