@@ -82,6 +82,9 @@ jobs:
   test:
     needs: deps-check
     runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+      issues: write
     services:
       postgres:
         image: postgres:17.4
@@ -120,3 +123,14 @@ jobs:
           CI: true
           NODE_ENV: test
           test_DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+
+      - name: Generate test-coverage alert comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        run: node .github/scripts/comment-bot-coverage.js
+
+      - name: Post test-coverage result comment
+        if: ${{ always() && github.event_name == 'pull_request' }} 
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: coverage-comment.md
+          comment-tag: test-cov
