@@ -1,0 +1,203 @@
+name: Code Quality & Test Coverage Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: '23.6.0'
+  NPM_VERSION: '11.1.0'
+
+jobs:
+  setup:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js with cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      
+      - name: Install global npm
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+      
+      # Try to restore the cache first
+      - name: Restore node_modules cache
+        id: cache-node-modules
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+      
+      # Only install dependencies if cache miss
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+      
+      # Save cache after install (if we had to install)
+      - name: Cache node_modules
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      # Restore cached node_modules
+      - name: Restore node_modules
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          fail-on-cache-miss: true
+      
+      - name: Cache Prisma
+        uses: actions/cache@v3
+        with:
+          path: node_modules/.prisma
+          key: ${{ runner.os }}-prisma-${{ hashFiles('prisma/schema.prisma') }}
+      
+      - name: Run Linter
+        run: npm run lint
+
+  deps-check:
+    needs: setup
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      # Restore cached node_modules
+      - name: Restore node_modules
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          fail-on-cache-miss: true
+      
+      - name: Check Dependencies
+        id: depsCheckStep
+        run: npm run deps:outdated:check
+
+      - name: Generate outdated dependencies comment
+        if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' }}
+        run: |
+          npm outdated --json > outdated-packages.json || true
+          node .github/scripts/comment-bot-deps.js
+
+      - name: Post outdated dependencies comment
+        if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' && github.event_name == 'pull_request'}} 
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: outdated-packages-report.md
+          comment-tag: dependency-check
+
+      - name: Delete outdated dependencies comment
+        if: success() && github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: dependency-check
+          mode: delete
+
+  test:
+    needs: setup
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+      issues: write
+    services:
+      postgres:
+        image: postgres:17.4
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: uzer
+          POSTGRES_PASSWORD: psswd
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      # Restore cached node_modules
+      - name: Restore node_modules
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          fail-on-cache-miss: true
+
+      - name: Cache test results
+        uses: actions/cache@v3
+        with:
+          path: .jest-cache
+          key: ${{ runner.os }}-jest-${{ hashFiles('**/*.test.js', '**/*.spec.js') }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Run Prisma Migrations
+        run: npm run prisma:migrate:deploy
+        env:
+          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+
+      - name: Run Tests with Coverage
+        run: npm run test:cov
+        env:
+          CI: true
+          NODE_ENV: test
+          JEST_CACHE_DIRECTORY: .jest-cache
+          test_DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+
+      - name: Generate test-coverage alert comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        run: node .github/scripts/comment-bot-coverage.js
+
+      - name: Post test-coverage result comment
+        if: ${{ always() && github.event_name == 'pull_request' }} 
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: coverage-comment.md
+          comment-tag: test-cov
