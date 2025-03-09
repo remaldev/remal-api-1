@@ -37,6 +37,7 @@ const jestConfig: JestConfig = {
     'lcov',
     'html',
     'text-summary',
+    'json-summary'
   ],
   coverageDirectory: './coverage',
   modulePathIgnorePatterns: [
