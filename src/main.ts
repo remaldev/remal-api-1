@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { LogLevel, ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import * as packageJson from '../package.json'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -16,6 +18,23 @@ async function bootstrap() {
       transform: true, // Automatically transforms payloads to DTOs
     }),
   )
+
+  const config = new DocumentBuilder()
+    .setTitle(packageJson.name)
+    .setDescription(packageJson.description)
+    .setVersion(packageJson.version)
+    .addBearerAuth()
+    .build()
+
+  const document = SwaggerModule.createDocument(app, config)
+
+  SwaggerModule.setup('api-docs', app, document, {
+    swaggerOptions: {
+      filter: true,
+      showRequestDuration: true,
+      persistAuthorization: true,
+    },
+  })
 
   const logLevel = configService.get<string>('LOG_LEVEL')
   const port = configService.get<number>('PORT', 3000)
