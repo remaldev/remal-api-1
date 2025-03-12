@@ -1,8 +1,9 @@
 import { beforeAll } from '@jest/globals'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { AppModule } from '../src/app.module'
 import { App } from 'supertest/types'
+import { AppModule } from '../src/app.module'
+import { bootstrapApp } from '../src/app.bootstrap'
 
 let app: INestApplication<App>
 
@@ -12,6 +13,9 @@ async function setupApp() {
   }).compile()
 
   app = moduleFixture.createNestApplication()
+
+  bootstrapApp(app)
+
   await app.init()
   return app
 }
