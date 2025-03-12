@@ -3,14 +3,10 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.user.create({
-    data: {
-      name: 'Abdellah Allali',
-      email: 'aallali@remal.dev',
-    },
+  return new Promise((resolve) => {
+    console.log('Database seeded')
+    resolve(1)
   })
-
-  console.log('Database seeded')
 }
 
 main()
