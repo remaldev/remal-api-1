@@ -19,6 +19,7 @@ const buildProject = (
 
 const jestConfig: JestConfig = {
   rootDir: '../',
+  roots: ['src'],
   clearMocks: true,
   collectCoverageFrom: [
     '<rootDir>/src/**/*.ts',
@@ -37,7 +38,7 @@ const jestConfig: JestConfig = {
     'lcov',
     'html',
     'text-summary',
-    'json-summary'
+    'json-summary',
   ],
   coverageDirectory: './coverage',
   modulePathIgnorePatterns: [
