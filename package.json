@@ -75,6 +75,7 @@
     "@swc/core": "1.11.9",
     "@testcontainers/mongodb": "10.19.0",
     "@testcontainers/postgresql": "10.19.0",
+    "@types/bcrypt": "5.0.2",
     "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
     "@types/node": "22.13.10",
