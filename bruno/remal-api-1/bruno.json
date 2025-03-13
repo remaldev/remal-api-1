@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "remal-api-1",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
