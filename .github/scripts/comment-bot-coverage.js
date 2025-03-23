@@ -36,11 +36,11 @@ function generateCoverageComment(coverageData) {
     branchesCoverage < COVERAGE_THRESHOLD;
   let message = ``
   if (coverageBelowThreshold) {
-    message += `### 🚨 Test Coverage Below 85% 🚨\n\n`
-    message += `The current test coverage does not meet the required 85% threshold. Please improve the following coverage metrics:\n\n`;
+    message += `### 🚨 Test Coverage Below ${COVERAGE_THRESHOLD}% 🚨\n\n`
+    message += `The current test coverage does not meet the required ${COVERAGE_THRESHOLD}% threshold. Please improve the following coverage metrics:\n\n`;
   } else {
     message += `### ✅ Test Coverage Meets Requirements ✅\n\n`
-    message += `All test coverage metrics are above the 85% threshold.\n`;
+    message += `All test coverage metrics are above the ${COVERAGE_THRESHOLD}% threshold.\n`;
   }
 
   message += `| Coverage Type | Current Coverage |\n`;
