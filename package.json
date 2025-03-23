@@ -70,7 +70,7 @@
     "@commitlint/config-conventional": "19.8.0",
     "@nestjs/cli": "11.0.5",
     "@nestjs/schematics": "11.0.2",
-    "@nestjs/testing": "11.0.11",
+    "@nestjs/testing": "11.0.12",
     "@swc/cli": "0.6.0",
     "@swc/core": "1.11.9",
     "@testcontainers/mongodb": "10.19.0",
