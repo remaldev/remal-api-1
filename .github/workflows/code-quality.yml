@@ -115,9 +115,7 @@ jobs:
 
       - name: Generate outdated dependencies comment
         if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' }}
-        run: |
-          npm outdated --json > outdated-packages.json || true
-          node .github/scripts/comment-bot-deps.js
+        run: node .github/scripts/comment-bot-deps.js
 
       - name: Post outdated dependencies comment
         if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' && github.event_name == 'pull_request'}} 

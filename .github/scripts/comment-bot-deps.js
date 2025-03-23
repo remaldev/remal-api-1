@@ -1,7 +1,26 @@
 const fs = require('fs');
+const { execSync } = require('child_process');
 
-// Load the outdated packages JSON file
-const outdatedPackages = JSON.parse(fs.readFileSync('outdated-packages.json', 'utf8'));
+// Run npm outdated to get real-time data of outdated packages
+let outdatedPackages;
+try {
+  const outdatedJson = execSync('npm outdated --json', { encoding: 'utf8' });
+  outdatedPackages = JSON.parse(outdatedJson);
+} catch (error) {
+  // npm outdated returns exit code 1 when there are outdated packages
+  // We need to extract the JSON output from the error
+  if (error.stdout) {
+    try {
+      outdatedPackages = JSON.parse(error.stdout);
+    } catch (e) {
+      console.error('Failed to parse npm outdated output:', e);
+      process.exit(1);
+    }
+  } else {
+    console.error('Failed to run npm outdated:', error);
+    process.exit(1);
+  }
+}
 
 // Regular expression to detect pre-release versions (e.g., -alpha, -beta, -rc, etc.)
 const preReleaseRegex = /-(alpha|beta|rc|dev|canary|insider|experimental)/i;
@@ -15,6 +34,11 @@ const nonPreReleasePackages = Object.entries(outdatedPackages)
     latest: packageInfo.latest
   }));
 
+if (nonPreReleasePackages.length === 0) {
+  console.log('No outdated packages found (excluding pre-release versions).');
+  process.exit(0);
+}
+
 // Generate markdown table
 let markdownTable = '| Package Name | Current Version | Latest Version |\n';
 markdownTable += '|--------------|-----------------|----------------|\n';
@@ -24,33 +48,20 @@ nonPreReleasePackages.forEach(pkg => {
 
 // Create the message with the markdown table
 const message = `## ⚠️ Dependency Update Warning 
-Some dependencies needs update:
+The following dependencies need updates:
 
 ${markdownTable}
 
 #### 🚀 Quick Update Guide
-<details>
-<summary>view</summary>
-  We've prepared an automated update script for you:
 
-  1. First, stash any existing changes to your package.json:
-  \`\`\`bash
-  git stash push package.json
-  \`\`\`
+Simply run the update script to automatically update all packages:
+\`\`\`bash
+bash update-packages.sh
+\`\`\`
 
-  2. Copy these package definitions to your update-packages.sh:
-  \`\`\`bash
-  packages_and_versions=(
-    ${nonPreReleasePackages.map(pkg => `"${pkg.name} ${pkg.latest}"`).join('\n    ')}
-  )
-  \`\`\`
-  3. Run the update script:
-  \`\`\`bash
-  bash update-packages.sh
-  \`\`\`
-  as a result, a list of commits will be created containing updates for each package
+This will create a series of commits, each containing updates for individual packages, and run tests after each update.
 
-</details>
+> Note: The script will handle everything automatically without needing to copy/paste any package information.
 `;
 
 // Write the result to a markdown file (or you can use this message for your GitHub comment)
