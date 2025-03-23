@@ -1,26 +1,29 @@
 #!/bin/bash
 
-# List of packages and their versions in "package_name version" format
-packages_and_versions=(
-    "example 1.2.3"
-)
+outdated=$(npm outdated --json)
 
-for pkg in "${packages_and_versions[@]}"; do
-    # Extract package name and version
-    package_name=$(echo $pkg | awk '{print $1}')
-    latest_version=$(echo $pkg | awk '{print $2}')
+if [ -z "$outdated" ]; then
+    echo "No outdated packages found."
+    exit 0
+fi
 
-    echo "Updating $package_name to $latest_version..."
-    npm install "$package_name@$latest_version"
+LOCK_FILE="package-lock.json" # "package-lock.json" or "yarn.lock" or "pnpm-lock.yaml"
+NPM="npm" # "npm" or "yarn" or "pnpm"
 
-    # Check if npm install failed (non-zero exit status)
-    if [ $? -ne 0 ]; then
-        echo "Error occurred while updating $package_name. Aborting."
-        exit 1
+for package in $(echo "$outdated" | jq -r 'keys[]'); do
+    version=$(echo "$outdated" | jq -r ".\"$package\".latest")
+
+    # Skip prerelease versions (containing a hyphen) (e.g. "2.1.0-alpha", "2.1.0-beta", "2.1.0-rc.1")
+    if [[ "$version" == *"-"* ]]; then
+        echo "Skipping $package@$version as it appears to be a prerelease version"
+        continue
     fi
 
-    git add package.json package-lock.json
-    git commit -m "[UPGRADE](deps) Update \`$package_name\` to \`v$latest_version\`"
+    echo "Updating $package to version $version..."
+    $NPM install "$package@$version"
+
+    git add package.json $LOCK_FILE
+    git commit -m "[UPGRADE](deps) Update \`$package\` to \`$version\`"
 
     if [ $? -ne 0 ]; then
         echo "Error occurred while commiting $package_name. Aborting."
@@ -33,8 +36,6 @@ for pkg in "${packages_and_versions[@]}"; do
         git reset --hard HEAD~1 # Rollback the last commit
         exit 1
     fi
-
-    echo "$package_name updated and committed successfully."
 done
 
-echo "All packages updated and committed successfully!"
+echo "All outdated packages have been updated and committed."
