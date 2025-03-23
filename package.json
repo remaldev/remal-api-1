@@ -73,7 +73,7 @@
     "@nestjs/testing": "11.0.12",
     "@swc/cli": "0.6.0",
     "@swc/core": "1.11.12",
-    "@testcontainers/mongodb": "10.19.0",
+    "@testcontainers/mongodb": "10.21.0",
     "@testcontainers/postgresql": "10.19.0",
     "@types/bcrypt": "5.0.2",
     "@types/express": "5.0.0",
