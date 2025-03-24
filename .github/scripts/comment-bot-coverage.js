@@ -1,3 +1,7 @@
+/*
+  Copyright 2025 Abdellah Allali <hi@allali.me>
+*/
+
 const fs = require('fs');
 
 // Load coverage data from the coverage-final.json file

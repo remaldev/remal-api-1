@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Copyright 2025 Abdellah Allali <hi@allali.me>
+
 outdated=$(npm outdated --json)
 
 if [ -z "$outdated" ]; then

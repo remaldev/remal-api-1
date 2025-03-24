@@ -1,3 +1,7 @@
+/*
+  Copyright 2025 Abdellah Allali <hi@allali.me>
+*/
+
 const fs = require('fs');
 const { execSync } = require('child_process');
 
