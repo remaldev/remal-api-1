@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Setup Node.js with cache
         uses: actions/setup-node@v3
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -91,9 +91,10 @@ jobs:
     permissions:
       pull-requests: write
       issues: write
+      contents: read
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+ 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -137,6 +138,7 @@ jobs:
     permissions:
       pull-requests: write
       issues: write
+      contents: read
     services:
       postgres:
         image: postgres:17.4
@@ -154,7 +156,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
