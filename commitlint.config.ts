@@ -13,40 +13,6 @@ module.exports = {
       'always',
       ['BUILD', 'DOC', 'FAKE', 'FEAT', 'FIX', 'REFACT', 'TEST', 'UPGRADE'],
     ],
-    'scope-enum': [
-      2,
-      'always',
-      [
-        // Features & modules
-        'auth',
-        'user',
-        'profile',
-        'payment',
-        'notification',
-
-        // Infrastructure
-        'api',
-        'db',
-        'cache',
-        'queue',
-
-        // Development
-        'docker',
-        'ci',
-        'deploy',
-        'config',
-        'style',
-
-        // Testing
-        'test',
-        'e2e',
-        'unit',
-
-        // Dependencies
-        'deps',
-        'pkg',
-      ],
-    ],
   },
 };
 
