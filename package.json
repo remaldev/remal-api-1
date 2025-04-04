@@ -50,6 +50,13 @@
     "node": "23.6.0",
     "npm": "11.1.0"
   },
+  "lint-staged": {
+    "*.{ts,js,json,md}": [
+      "npx @biomejs/biome format --write",
+      "npx @biomejs/biome lint --fix"
+    ],
+    "schema.prisma": ["npx prisma format"]
+  },
   "dependencies": {
     "@nestjs/common": "11.0.13",
     "@nestjs/config": "4.0.2",
