@@ -36,7 +36,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prepare": "husky",
     "deps:check": "npx -y depcheck@1.4.3",
-    "deps:outdated:check": "npx check-outdated --ignore-pre-releases --columns name,current,latest"
+    "deps:outdated:check": "npx check-outdated --ignore-pre-releases --columns name,current,latest",
+    "deps:update:all": "npx npm-check-updates -u && npm install"
   },
   "prisma": {
     "seed": "ts-node prisma/prisma.seed.ts"
