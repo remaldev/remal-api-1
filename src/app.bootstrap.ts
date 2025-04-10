@@ -32,6 +32,4 @@ export function bootstrapApp(app: INestApplication): void {
       persistAuthorization: true,
     },
   })
-
-  app.useGlobalFilters(new GlobalExceptionFilter())
 }
