@@ -1,6 +1,6 @@
 import * as request from 'supertest'
 import { getHttpServer } from '../jest-setup'
-import { UserResponseDto } from 'src/user/dto/user-response.dto'
+import { UserResponseDto } from '../../src/user/dto/user-response.dto'
 import { isValidDate } from '../helpers/test-matchers'
 
 describe('UserController (e2e)', () => {
