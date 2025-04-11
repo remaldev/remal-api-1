@@ -6,5 +6,9 @@
     "dist",
     "**/*spec.ts",
     "commitlint.config.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "declaration": false,
+    "sourceMap": false
+  }
 }
