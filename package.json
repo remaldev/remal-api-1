@@ -17,7 +17,8 @@
   "contributors": [],
   "scripts": {
     "env": "dotenv -e .env.${NODE_ENV:-local}",
-    "build": "npm run env -- nest build",
+    "build": "rm -rf dist && nest build && npm run postbuild",
+    "postbuild": "mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/",
     "start": "npm run env -- nest start",
     "start:dev": "npm run env -- nest start --watch",
     "start:prod": "NODE_ENV=prod npm run env -- node dist/main",
