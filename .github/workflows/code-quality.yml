@@ -177,11 +177,12 @@ jobs:
         with:
           path: .jest-cache
           key: ${{ runner.os }}-jest-${{ hashFiles('**/*.test.js', '**/*.spec.js') }}-${{ hashFiles('**/package-lock.json') }}
-
+      # TODO: create correct .env.test file with variables from github secrets
       - name: Run Prisma Migrations
         run: npm run prisma:migrate:deploy
         env:
           DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+          NODE_ENV: test
 
       - name: Run Tests with Coverage
         run: npm run test:cov
@@ -189,7 +190,7 @@ jobs:
           CI: true
           NODE_ENV: test
           JEST_CACHE_DIRECTORY: .jest-cache
-          test_DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
 
       - name: Generate test-coverage alert comment
         if: ${{ always() && github.event_name == 'pull_request' }}
