@@ -1,6 +1,6 @@
 {
   "name": "remal-api-1",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Remal API boilerplate",
   "license": "ISC",
   "main": "src/main.ts",
