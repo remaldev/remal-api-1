@@ -52,10 +52,11 @@
     "npm": "11.1.0"
   },
   "lint-staged": {
-    "*.{ts,js,json,md}": [
+    "*.{ts,js,json}": [
       "npx @biomejs/biome format --write",
       "npx @biomejs/biome lint --fix"
     ],
+    "*.{md}": ["npx prettier --write"],
     "schema.prisma": ["npx prisma format"]
   },
   "dependencies": {
