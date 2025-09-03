@@ -3,7 +3,7 @@ module.exports = {
     parserOpts: {
       headerCorrespondence: ['type', 'scope', 'ticket', 'subject'],
       headerPattern:
-        /^\[(\w+)](?:\(([\w-]+)\))?( #[\w-]+)? ([A-Z]+[\w\s,;:!?./§*%$£&"#'(\-|`_\\^@)°+=€]*)$/,
+        /^\[(\w+)](?:\(([\w-]+)\))?( #[\w-]+)? ([A-Z]+[\w\s,;:!?./§*%$£&"#'→>(\-|`_\\^@)°+=€]*)$/,
     },
   },
   rules: {
@@ -14,8 +14,7 @@ module.exports = {
       ['BUILD', 'DOC', 'FAKE', 'FEAT', 'FIX', 'REFACT', 'TEST', 'UPGRADE'],
     ],
   },
-};
-
+}
 
 // Examples:
 
