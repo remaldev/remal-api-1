@@ -1,6 +1,8 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.7.0/schema.json",
-  "organizeImports": { "enabled": true },
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "assist": {
+    "enabled": true
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -9,7 +11,6 @@
         "noExcessiveCognitiveComplexity": "error"
       },
       "correctness": {
-        "noNewSymbol": "error",
         "noUndeclaredVariables": "error",
         "noUnusedImports": "error",
         "noUnusedPrivateClassMembers": "error",
@@ -18,7 +19,6 @@
       "style": {
         "useImportType": "off",
         "noNamespace": "error",
-        "noNamespaceImport": "off",
         "noNegationElse": "error",
         "noParameterProperties": "error",
         "noShoutyConstants": "error",
@@ -27,11 +27,13 @@
         "useConsistentArrayType": "error",
         "useFilenamingConvention": {
           "level": "off",
-          "options": { "requireAscii": true, "filenameCases": ["kebab-case"] }
+          "options": {
+            "requireAscii": true,
+            "filenameCases": ["kebab-case"]
+          }
         },
         "useForOf": "error",
-        "useShorthandAssign": "error",
-        "useShorthandArrayType": "error"
+        "useShorthandAssign": "error"
       },
       "suspicious": {
         "noEmptyBlockStatements": "error",
@@ -70,7 +72,7 @@
     ]
   },
   "files": {
-    "include": [
+    "includes": [
       "*.ts",
       "*.json",
       "tsconfig*.json",
@@ -79,6 +81,6 @@
       "test/**/*.ts",
       "test/**/*.json"
     ],
-    "ignore": ["node_modules", "dist", "coverage"]
+    "ignoreUnknown": true
   }
 }
