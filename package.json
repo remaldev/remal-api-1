@@ -44,20 +44,24 @@
     "seed": "ts-node prisma/prisma.seed.ts"
   },
   "engines": {
-    "node": "^23.6.0",
-    "npm": "^11.1.0"
+    "node": "^24.7.0",
+    "npm": "^11.5.2"
   },
   "volta": {
-    "node": "23.6.0",
-    "npm": "11.1.0"
+    "node": "24.7.0",
+    "npm": "11.5.2"
   },
   "lint-staged": {
     "*.{ts,js,json}": [
       "npx @biomejs/biome format --write",
       "npx @biomejs/biome lint --fix"
     ],
-    "*.{md}": ["npx prettier --write"],
-    "schema.prisma": ["npx prisma format"]
+    "*.{md}": [
+      "npx prettier --write"
+    ],
+    "schema.prisma": [
+      "npx prisma format"
+    ]
   },
   "dependencies": {
     "@nestjs/common": "11.0.15",
