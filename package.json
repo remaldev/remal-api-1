@@ -40,9 +40,6 @@
     "deps:outdated:check": "npx check-outdated --ignore-pre-releases --columns name,current,latest",
     "deps:update:all": "npx npm-check-updates -u && npm install"
   },
-  "prisma": {
-    "seed": "ts-node prisma/prisma.seed.ts"
-  },
   "engines": {
     "node": "^24.7.0",
     "npm": "^11.5.2"

@@ -1,0 +1,8 @@
+-- Initialize database for remal-api-1
+-- This file is automatically executed when the PostgreSQL container starts for the first time
+-- Create additional databases if needed
+-- CREATE DATABASE remal_test;
+-- Set up any initial database configurations
+-- Example: Create extensions if needed
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- The main database 'remal_db' is already created by the POSTGRES_DB environment variable
