@@ -21,14 +21,31 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  username     String?  @unique
-  name         String?
-  role         Role     @default(USER)
-  password     String
-  refreshToken String?
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         String   @id @default(cuid())
+  email      String   @unique
+  username   String?  @unique
+  name       String?
+  role       Role     @default(USER)
+  password   String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Token      Token[]
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  REFRESH
+}
+
+model Token {
+  token     String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      TokenType
+  expiresAt DateTime
+
+  @@id([token, userId, type])
+  @@unique([userId, type]) // ensure only one active token per user/type
 }
