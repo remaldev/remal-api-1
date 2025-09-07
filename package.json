@@ -20,7 +20,7 @@
     "build": "rm -rf dist && nest build && npm run postbuild",
     "postbuild": "mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/",
     "start": "npm run env -- nest start",
-    "start:dev": "npm run env -- nest start --watch",
+    "start:dev": "dotenv -e .env.${NODE_ENV:-local} -- nest start --watch",
     "start:prod": "NODE_ENV=prod npm run env -- node dist/main",
     "format": "npx @biomejs/biome format --write src/",
     "lint": "npx @biomejs/biome lint src/",
