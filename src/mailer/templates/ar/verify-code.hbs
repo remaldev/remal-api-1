@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+
+<head>
+  <meta charset="utf-8" />
+  <title>رمز التحقق من البريد الإلكتروني</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      padding: 20px;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      text-align: center;
+      color: #111827;
+    }
+
+    p {
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4b5563;
+    }
+
+    .code {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .digit {
+      width: 40px;
+      height: 50px;
+      line-height: 50px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      background: #f3f4f6;
+      color: #1e40af;
+    }
+
+    .separator {
+      display: flex;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #6b7280;
+    }
+
+    .footer {
+      font-size: 12px;
+      text-align: center;
+      margin-top: 20px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>التحقق من البريد الإلكتروني</h1>
+    <p>استخدم الرمز أدناه للتحقق من عنوان بريدك الإلكتروني. سينتهي هذا الرمز خلال 10 دقائق.</p>
+
+    <div class="code">
+      <div class="digit">{{codeDigits.[5]}}</div>
+      <div class="digit">{{codeDigits.[4]}}</div>
+      <div class="digit">{{codeDigits.[3]}}</div>
+      <div class="separator">-</div>
+      <div class="digit">{{codeDigits.[2]}}</div>
+      <div class="digit">{{codeDigits.[1]}}</div>
+      <div class="digit">{{codeDigits.[0]}}</div>
+    </div>
+
+    <p>إذا لم تطلب هذا الرمز، يمكنك تجاهل هذا البريد الإلكتروني بأمان.</p>
+
+    <div class="footer">
+      &copy; {{year}} Mahal-Remal
+    </div>
+  </div>
+</body>
+
+</html>
