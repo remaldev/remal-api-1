@@ -1,8 +1,8 @@
+import { ConfigService } from '@nestjs/config'
 import { Test, TestingModule } from '@nestjs/testing'
-import { UserService } from './user.service'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../prisma/prisma.service'
-import { ConfigService } from '@nestjs/config'
+import { UserService } from './user.service'
 
 describe('UserService (unit)', () => {
   let userService: UserService
@@ -39,7 +39,9 @@ describe('UserService (unit)', () => {
 
   it('should throw an error if bcrypt fails to hash', async () => {
     const password = 'testPassword'
-    jest.spyOn(bcrypt, 'hash').mockImplementation(() => { throw new Error('Hashing failed') })
+    jest.spyOn(bcrypt, 'hash').mockImplementation(() => {
+      throw new Error('Hashing failed')
+    })
 
     try {
       await userService.hashPassword(password)
