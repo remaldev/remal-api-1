@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { GlobalExceptionFilter } from './common/filters/http-exception.filter'
 import * as packageJson from '../package.json'
+import { GlobalExceptionFilter } from './common/filters/http-exception.filter'
 
 /**
  * Apply common application configurations
@@ -32,4 +32,6 @@ export function bootstrapApp(app: INestApplication): void {
       persistAuthorization: true,
     },
   })
+
+  app.enableCors()
 }
