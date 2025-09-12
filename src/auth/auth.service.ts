@@ -1,14 +1,17 @@
-import { randomInt } from 'node:crypto'
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common'
+import { JwtService } from '@nestjs/jwt'
 import { TokenType } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
+import { randomInt } from 'node:crypto'
 import { MailerService } from '../mailer/mailer.service'
 import { PrismaService } from '../prisma/prisma.service'
+import { LoginDto } from './dto/login.dto'
 import { SignupDto } from './dto/signup.dto'
 
 @Injectable()
@@ -16,10 +19,16 @@ export class AuthService {
   private readonly prismaService: PrismaService
   private readonly logger = new Logger(AuthService.name)
   private readonly mailerService: MailerService
+  private readonly jwtService: JwtService
 
-  constructor(prismaService: PrismaService, mailerService: MailerService) {
+  constructor(
+    prismaService: PrismaService,
+    mailerService: MailerService,
+    jwtService: JwtService,
+  ) {
     this.prismaService = prismaService
     this.mailerService = mailerService
+    this.jwtService = jwtService
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -106,7 +115,6 @@ export class AuthService {
             },
           },
         })
-        console.log(tokenEntity)
 
         if (tokenEntity.expiresAt < new Date()) {
           await prisma.token.deleteMany({
@@ -138,7 +146,6 @@ export class AuthService {
         }
       })
     } catch (error) {
-      console.log(error)
       if (error.status) {
         throw error
       }
@@ -154,6 +161,106 @@ export class AuthService {
         error.stack,
       )
       throw new BadRequestException('Failed to verify account')
+    }
+  }
+
+  private async verifyPassword(
+    plainText: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    try {
+      return await bcrypt.compare(plainText, hashedPassword)
+    } catch (error) {
+      this.logger.error(`Password verification failed: ${error.message}`)
+      return false
+    }
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto
+
+    try {
+      // Find user by email with selected fields only
+      const user = await this.prismaService.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          isVerified: true,
+          role: true,
+        },
+      })
+
+      // Check if user exists
+      if (!user) {
+        throw new UnauthorizedException('Invalid email or password')
+      }
+
+      // Verify password
+      const isPasswordValid = await this.verifyPassword(password, user.password)
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid email or password')
+      }
+
+      // Check if user has verified their email
+      if (!user.isVerified) {
+        throw new UnauthorizedException(
+          'Please verify your email address before logging in',
+        )
+      }
+
+      const now = Math.floor(Date.now() / 1000)
+      const accessTokenExpiresIn = 15 * 60 // 15 minutes
+      const refreshTokenExpiresIn = 7 * 24 * 60 * 60 // 7 days
+
+      // Generate access token (short-lived)
+      const accessTokenPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        type: 'access',
+        iat: now,
+      }
+
+      // Generate refresh token (long-lived)
+      const refreshTokenPayload = {
+        sub: user.id,
+        type: 'refresh',
+        iat: now,
+      }
+
+      const accessToken = this.jwtService.sign(accessTokenPayload, {
+        expiresIn: accessTokenExpiresIn,
+      })
+
+      const refreshToken = this.jwtService.sign(refreshTokenPayload, {
+        expiresIn: refreshTokenExpiresIn,
+      })
+
+      // Log successful login
+      this.logger.log(
+        `User logged in successfully: ${user.email} (ID: ${user.id})`,
+      )
+
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'Bearer',
+        scope: 'read write',
+      }
+    } catch (error) {
+      // If it's already an HTTP exception, re-throw it
+      if (error.status) {
+        throw error
+      }
+
+      // Log and throw generic error for unexpected cases
+      this.logger.error(
+        `Login failed for email ${email}: ${error.message}`,
+        error.stack,
+      )
+      throw new UnauthorizedException('Login failed. Please try again.')
     }
   }
 }
