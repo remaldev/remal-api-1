@@ -2,8 +2,11 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   HttpStatus,
+  Param,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -11,6 +14,8 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
@@ -116,6 +121,94 @@ export class AuthController {
       success: true,
       message:
         'User registered successfully. Please check your email for verification code.',
+      data: result,
+    }
+  }
+
+  @Public()
+  @Get('verify/:token')
+  @ApiOperation({
+    summary: 'Verify email address',
+    description:
+      'Verify user email address using the 6-digit verification code sent during registration. The token must be used within 10 minutes of registration.',
+  })
+  @ApiParam({
+    name: 'token',
+    description: '6-digit verification code sent to user email',
+    example: '123456',
+    schema: {
+      type: 'string',
+      pattern: '^[0-9]{6}$',
+      minLength: 6,
+      maxLength: 6,
+    },
+  })
+  @ApiQuery({
+    name: 'email',
+    description: 'Email address of the user to verify',
+    example: 'user@example.com',
+    schema: {
+      type: 'string',
+      format: 'email',
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Email verified successfully. User account is now active.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: {
+          type: 'boolean',
+          example: true,
+        },
+        message: {
+          type: 'string',
+          example: 'Email verified successfully',
+        },
+        data: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              example: 'clm1234567890abcdef',
+            },
+            email: {
+              type: 'string',
+              example: 'user@example.com',
+            },
+            isVerified: {
+              type: 'boolean',
+              example: true,
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid token, expired token, or user not found',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: {
+          oneOf: [
+            { type: 'string', example: 'Token has expired' },
+            { type: 'string', example: 'Invalid verification token' },
+          ],
+        },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  async verify(@Param('token') token: string, @Query('email') email: string) {
+    const result = await this.authService.verifyAccountToken(email, token)
+
+    return {
+      success: true,
+      message: 'Email verified successfully',
       data: result,
     }
   }
