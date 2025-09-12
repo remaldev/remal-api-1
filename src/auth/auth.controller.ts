@@ -22,10 +22,11 @@ import {
 } from '@nestjs/swagger'
 import { Response } from 'express'
 import { AuthService } from './auth.service'
-import { Public } from './decorators'
+import { CurrentUser, Public, Roles } from './decorators'
 import { LoginDto } from './dto/login.dto'
 import { LoginResponseDto } from './dto/login-response.dto'
 import { SignupDto } from './dto/signup.dto'
+import { Role } from './enums'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
 
@@ -305,5 +306,23 @@ export class AuthController {
     })
 
     return responseData
+  }
+
+  @Roles(Role.ADMIN)
+  @Get('protected/admin')
+  protectedAdminRoute(@CurrentUser() user) {
+    return {
+      message: 'You have accessed a protected ADMIN route',
+      user,
+    }
+  }
+
+  @Roles(Role.ADMIN, Role.USER)
+  @Get('protected/user')
+  protectedUserRoute(@CurrentUser() user) {
+    return {
+      message: 'You have accessed a protected USER route',
+      user,
+    }
   }
 }
