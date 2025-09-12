@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -19,8 +20,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
+import { Response } from 'express'
 import { AuthService } from './auth.service'
 import { Public } from './decorators'
+import { LoginDto } from './dto/login.dto'
+import { LoginResponseDto } from './dto/login-response.dto'
 import { SignupDto } from './dto/signup.dto'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
@@ -211,5 +215,95 @@ export class AuthController {
       message: 'Email verified successfully',
       data: result,
     }
+  }
+
+  @Public()
+  @Post('login')
+  @ApiOperation({
+    summary: 'User login',
+    description:
+      'Authenticate user with email and password. Returns JWT access token for authenticated requests. The refresh token is set in an HTTP-only cookie named refreshToken. User must have verified their email address.',
+  })
+  @ApiBody({
+    type: LoginDto,
+    description: 'User login credentials',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'User authenticated successfully. The refresh token is set in an HTTP-only cookie named refreshToken. The response body only contains the access token and related info.',
+    type: LoginResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        success: {
+          type: 'boolean',
+          example: true,
+        },
+        message: {
+          type: 'string',
+          example: 'Login successful',
+        },
+        data: {
+          $ref: '#/components/schemas/LoginResponseDto',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials or unverified email',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 401 },
+        message: {
+          oneOf: [
+            { type: 'string', example: 'Invalid email or password' },
+            {
+              type: 'string',
+              example: 'Please verify your email address before logging in',
+            },
+          ],
+        },
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: {
+          type: 'array',
+          items: { type: 'string' },
+          example: [
+            'Please provide a valid email address',
+            'Password must be at least 6 characters long',
+          ],
+        },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(loginDto)
+    const { refresh_token, ...responseData } = result
+
+    response.cookie('refreshToken', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+      path: '/',
+    })
+
+    return responseData
   }
 }
