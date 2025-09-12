@@ -5,6 +5,7 @@
   "compilerOptions": {
     "webpack": true,
     "deleteOutDir": true,
-    "plugins": ["@nestjs/swagger/plugin"]
+    "plugins": ["@nestjs/swagger/plugin"],
+    "assets": ["mailer/templates/**/*.hbs"]
   }
 }
