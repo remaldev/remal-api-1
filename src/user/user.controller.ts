@@ -1,19 +1,34 @@
 import {
-  Controller,
-  Post,
   Body,
-  HttpStatus,
-  UseInterceptors,
   ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger'
-import { UserService } from './user.service'
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger'
+import { Role } from '@prisma/client'
+import { CurrentUser, Roles } from 'src/auth/decorators'
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
+import { RolesGuard } from 'src/auth/guards/roles.guard'
+import { AuthenticatedUser } from 'src/auth/interfaces'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UserResponseDto } from './dto/user-response.dto'
+import { UserService } from './user.service'
 
 @ApiTags('Users')
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class UserController {
   private readonly userService: UserService
 
@@ -42,5 +57,24 @@ export class UserController {
   })
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto)
+  }
+
+  @Roles(Role.ADMIN, Role.USER)
+  @Get('profile')
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Get the authenticated user profile information',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User profile retrieved successfully',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Authentication required',
+  })
+  getProfile(@CurrentUser() user: AuthenticatedUser) {
+    return this.userService.getUserById(user.id)
   }
 }
