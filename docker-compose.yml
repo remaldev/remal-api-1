@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: remal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: remal_db
+      POSTGRES_USER: remal_user
+      POSTGRES_PASSWORD: remal_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remal_user -d remal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - remal-network
+
+  # NestJS Application (Development)
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: remal-app-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: local
+      DB_POSTGRE_URI: postgresql://remal_user:remal_password@postgres:5432/remal_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - remal-network
+    profiles:
+      - dev
+
+  # NestJS Application (Production)
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: remal-app-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: prod
+      DB_POSTGRE_URI: postgresql://remal_user:remal_password@postgres:5432/remal_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - remal-network
+    profiles:
+      - prod
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  remal-network:
+    driver: bridge
