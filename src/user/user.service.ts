@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateUserDto } from './dto/create-user.dto'
+import { UserResponseDto } from './dto/user-response.dto'
 import { toUserResponseDto } from './utils/user.mapper'
 
 @Injectable()
@@ -29,5 +30,23 @@ export class UserService {
     })
     const userDto = toUserResponseDto(createdUser)
     return userDto
+  }
+
+  async getUserById(id: string): Promise<UserResponseDto | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        name: true,
+        role: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        password: false, // Don't include password
+      },
+    })
+    return user ? toUserResponseDto(user) : null
   }
 }
