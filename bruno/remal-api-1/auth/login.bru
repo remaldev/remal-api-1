@@ -1,0 +1,23 @@
+meta {
+  name: login
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "test@remal.ma",
+    "password": "TestPsswd+1"
+  }
+}
+
+vars:post-response {
+  access_token: res.body.access_token
+  refresh_token: res.body.refresh_token
+}
