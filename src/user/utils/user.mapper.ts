@@ -1,8 +1,10 @@
+import type { User } from '@prisma/client'
 import { plainToClass } from 'class-transformer'
 import { UserResponseDto } from '../dto/user-response.dto'
-import type { User } from '@prisma/client'
 
-export function toUserResponseDto(user: User): UserResponseDto {
+export function toUserResponseDto(
+  user: Omit<User, 'password'>,
+): UserResponseDto {
   return plainToClass(UserResponseDto, user, {
     excludeExtraneousValues: false,
   })
