@@ -1,0 +1,15 @@
+meta {
+  name: verifyToken
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/auth/verify/943666?email=test@remal.ma
+  body: none
+  auth: none
+}
+
+params:query {
+  email: test@remal.ma
+}
