@@ -1,13 +1,42 @@
-import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger'
-import { CreateUserDto } from './create-user.dto'
-import { Exclude } from 'class-transformer'
+import { ApiProperty } from '@nestjs/swagger'
+import { Role } from '@prisma/client'
 
-export class UserResponseDto extends OmitType(CreateUserDto, ['password']) {
+export class UserResponseDto {
   @ApiProperty({
     description: 'Unique identifier',
     example: 'clj1p5mle0000v1337k1337q2',
   })
   id: string
+  @ApiProperty({
+    description: 'User email',
+    example: 'hi@allali.me',
+  })
+  email: string
+
+  @ApiProperty({
+    description: 'User username',
+    example: 'johndoe',
+  })
+  username?: string
+
+  @ApiProperty({
+    description: 'User name',
+    example: 'John Doe',
+  })
+  name?: string
+
+  @ApiProperty({
+    description: 'User role',
+    example: 'USER',
+    enum: Role,
+  })
+  role: Role
+
+  @ApiProperty({
+    description: 'User verification status',
+    example: true,
+  })
+  isVerified: boolean
 
   @ApiProperty({
     description: 'User creation date',
@@ -20,8 +49,4 @@ export class UserResponseDto extends OmitType(CreateUserDto, ['password']) {
     example: '2026-01-01T00:00:00.000Z',
   })
   updatedAt: Date
-
-  @Exclude()
-  @ApiHideProperty()
-  password: string
 }
