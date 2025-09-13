@@ -75,11 +75,10 @@
     "includes": [
       "*.ts",
       "*.json",
-      "tsconfig*.json",
+      "*/**/*.json",
       "prisma/prisma.seed.ts",
       "src/**/*.ts",
-      "test/**/*.ts",
-      "test/**/*.json"
+      "test/**/*.ts"
     ],
     "ignoreUnknown": true
   }
