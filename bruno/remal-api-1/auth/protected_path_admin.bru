@@ -1,0 +1,15 @@
+meta {
+  name: protected_path_admin
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/auth/protected/admin
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
