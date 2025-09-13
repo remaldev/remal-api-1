@@ -1,0 +1,19 @@
+meta {
+  name: signup
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/auth/signup
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "test@remal.ma",
+    "password": "TestPsswd+1",
+    "language": "ar"
+  }
+}
