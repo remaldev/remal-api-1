@@ -13,10 +13,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { CurrentUser, Roles } from 'src/auth/decorators'
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'
-import { RolesGuard } from 'src/auth/guards/roles.guard'
-import { AuthenticatedUser } from 'src/auth/interfaces'
+import { CurrentUser, Roles } from '../auth/decorators'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { RolesGuard } from '../auth/guards/roles.guard'
+import { AuthenticatedUser } from '../auth/interfaces'
 import { UserResponseDto } from './dto/user-response.dto'
 import { UserService } from './user.service'
 
