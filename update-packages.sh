@@ -25,7 +25,7 @@ for package in $(echo "$outdated" | jq -r 'keys[]'); do
     $NPM install "$package@$version"
 
     git add package.json $LOCK_FILE
-    git commit -m "[UPGRADE](deps) Update \`$package\` to \`$version\`"
+    git commit -m "build: update \`$package\` to \`$version\`"
 
     if [ $? -ne 0 ]; then
         echo "Error occurred while commiting $package_name. Aborting."
