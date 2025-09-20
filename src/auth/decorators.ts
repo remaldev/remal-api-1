@@ -13,10 +13,14 @@ export const ROLES_KEY = 'roles'
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles)
 
 export const CurrentUser = createParamDecorator(
-  (data: string, ctx: ExecutionContext) => {
+  (_data: string, ctx: ExecutionContext) => {
+    // to use data parameter if needed in the future
+    // declare the decorator like that @CurrentUser('email') email: string
+    // so you can access the email directly
+    // data = 'email' then u can access it like that user[data]
     const request = ctx.switchToHttp().getRequest()
     const user = request.user
 
-    return (data ? user?.[data] : user) as AuthenticatedUser
+    return user as AuthenticatedUser
   },
 )
