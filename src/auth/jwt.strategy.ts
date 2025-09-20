@@ -48,6 +48,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       return user
     } catch (error) {
+      if (error.status) {
+        throw error
+      }
       this.logger.error(`Error validating JWT: ${error.message}`)
       throw new InternalServerErrorException(`Internal server error`)
     }
