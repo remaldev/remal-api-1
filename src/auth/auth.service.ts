@@ -149,14 +149,6 @@ export class AuthService {
       if (error.status) {
         throw error
       }
-      if (error.code === 'P2025') {
-        this.logger.warn(`User not found for verification: ${email}`)
-        throw new BadRequestException('Invalid verification token')
-      }
-      if (error.code === 'P2023') {
-        this.logger.warn(`Verification token not found: ${token}`)
-        throw new BadRequestException('Verification token is invalid')
-      }
       this.logger.error(
         `Account verification failed: ${error.message}`,
         error.stack,
