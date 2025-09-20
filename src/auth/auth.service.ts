@@ -44,11 +44,6 @@ export class AuthService {
   async signup(signupDto: SignupDto) {
     const { email, password, language } = signupDto
 
-    // Business logic validation - throw HTTP exceptions directly
-    if (!email || !password) {
-      throw new BadRequestException('Email and password are required')
-    }
-
     const verificationToken = this.generateVerificationToken()
 
     try {
@@ -93,11 +88,6 @@ export class AuthService {
         throw new ConflictException('Email already in use')
       }
 
-      // If it's already an HTTP exception, re-throw it
-      if (error.status) {
-        throw error
-      }
-
       // Log and throw generic error for unexpected cases
       this.logger.error(`Signup failed: ${error.message}`, error.stack)
       throw new BadRequestException('Failed to create account')
@@ -106,27 +96,37 @@ export class AuthService {
 
   async verifyAccountToken(email: string, token: string) {
     try {
-      return await this.prismaService.$transaction(async (prisma) => {
-        const tokenEntity = await prisma.token.findFirstOrThrow({
-          where: { token, type: TokenType.EMAIL_VERIFICATION, user: { email } },
-          include: {
-            user: {
-              select: { id: true, email: true, isVerified: true },
-            },
+      // First, check if token exists and is expired OUTSIDE the transaction
+      const tokenEntity = await this.prismaService.token.findFirst({
+        where: { token, type: TokenType.EMAIL_VERIFICATION, user: { email } },
+        include: {
+          user: {
+            select: { id: true, email: true, isVerified: true },
+          },
+        },
+      })
+
+      // Check if token exists
+      if (!tokenEntity) {
+        throw new BadRequestException('Invalid verification token')
+      }
+
+      // Check if token is expired and handle it OUTSIDE transaction
+      if (tokenEntity.expiresAt < new Date()) {
+        // Delete expired token outside transaction
+        await this.prismaService.token.deleteMany({
+          where: {
+            token: tokenEntity.token,
+            userId: tokenEntity.userId,
+            type: TokenType.EMAIL_VERIFICATION,
           },
         })
+        // Now throw the error after deletion is completed
+        throw new BadRequestException('Token has expired')
+      }
 
-        if (tokenEntity.expiresAt < new Date()) {
-          await prisma.token.deleteMany({
-            where: {
-              token: tokenEntity.token,
-              userId: tokenEntity.userId,
-              type: TokenType.EMAIL_VERIFICATION,
-            },
-          })
-          throw new BadRequestException('Token has expired')
-        }
-
+      // If token is valid, proceed with verification in transaction
+      return await this.prismaService.$transaction(async (prisma) => {
         const { userId } = tokenEntity
 
         const updatedUser = await prisma.user.update({
@@ -150,10 +150,11 @@ export class AuthService {
         throw error
       }
       if (error.code === 'P2025') {
-        // prisma code P2025 means: "An operation failed because it depends on one or more records that were required but not found. {cause}"
+        this.logger.warn(`User not found for verification: ${email}`)
         throw new BadRequestException('Invalid verification token')
       }
       if (error.code === 'P2023') {
+        this.logger.warn(`Verification token not found: ${token}`)
         throw new BadRequestException('Verification token is invalid')
       }
       this.logger.error(
