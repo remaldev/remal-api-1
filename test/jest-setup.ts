@@ -2,8 +2,8 @@ import { beforeAll } from '@jest/globals'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
 import { App } from 'supertest/types'
-import { AppModule } from '../src/app.module'
 import { bootstrapApp } from '../src/app.bootstrap'
+import { AppModule } from '../src/app.module'
 
 let app: INestApplication<App>
 

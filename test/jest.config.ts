@@ -14,7 +14,10 @@ const buildProject = (
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  setupFilesAfterEnv: ['<rootDir>/test/jest-setup.ts'],
+  // Only use the app setup for e2e tests
+  ...(folderName === 'e2e' && {
+    setupFilesAfterEnv: ['<rootDir>/test/jest-setup.ts'],
+  }),
 })
 
 const jestConfig: JestConfig = {
