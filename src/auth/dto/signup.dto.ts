@@ -43,7 +43,6 @@ export class SignupDto {
     default: 'en',
     required: false,
   })
-  @Transform(({ value }) => (value ? value.trim().toLowerCase() : 'en'))
   @Matches(/^(en|ar)$/, {
     message: 'Language must be either "en" (English) or "ar" (Arabic)',
   })
