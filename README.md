@@ -17,7 +17,7 @@ Up-to-date NestJS-based API boilerplate with Prisma ORM, authentication, and tes
 
 ## Setup
 
-**Prerequisites:** Volta, Node.js (`v23.6.0`), npm (_`v11.1.0`_), PostgreSQL
+**Prerequisites:** Volta, Node.js (`v24.7.0`), npm (_`v11.5.2`_), PostgreSQL
 
 1. **Create a new repository from template:**
 
@@ -54,7 +54,6 @@ Up-to-date NestJS-based API boilerplate with Prisma ORM, authentication, and tes
    ```
 
    For different environments, you can create specific env files:
-
    - `.env.local` - Local development
    - `.env.test` - Testing environment (used by Jest)
    - `.env.dev` - Development server
@@ -72,6 +71,38 @@ Up-to-date NestJS-based API boilerplate with Prisma ORM, authentication, and tes
    ```bash
    npm run start:dev   # API runs at http://localhost:3000
    ```
+
+## Authentication API
+
+The application includes a comprehensive JWT-based authentication system with email verification:
+
+| Endpoint                | Method | Description                                 | Body                                       | Response                              |
+| ----------------------- | ------ | ------------------------------------------- | ------------------------------------------ | ------------------------------------- |
+| `/auth/signup`          | POST   | Register new user with email verification   | `{ email, password, firstName, lastName }` | `{ message, user }`                   |
+| `/auth/login`           | POST   | Login with JWT tokens                       | `{ email, password }`                      | `{ accessToken, refreshToken, user }` |
+| `/auth/verify/:token`   | GET    | Verify email with 6-digit code              | -                                          | `{ message, user }`                   |
+| `/auth/protected/user`  | GET    | User-protected route (requires JWT)         | -                                          | `{ message, user }`                   |
+| `/auth/protected/admin` | GET    | Admin-protected route (requires admin role) | -                                          | `{ message, user }`                   |
+| `/user/profile`         | GET    | Get current user profile                    | -                                          | `{ user }`                            |
+
+### Authentication Features
+
+- **JWT Tokens**: Access tokens with refresh token rotation
+- **Email Verification**: 6-digit verification codes sent via email
+- **Role-based Access**: User and Admin role protection
+- **Password Security**: bcrypt hashing with salt rounds
+- **Token Management**: Automatic token refresh and blacklisting
+
+### API Testing with Bruno
+
+The project includes comprehensive Bruno API collections in `bruno/remal-api-1/` for testing all authentication endpoints:
+
+- `auth/signup.bru` - User registration
+- `auth/login.bru` - User login
+- `auth/verifyToken.bru` - Email verification
+- `auth/protected_path_user.bru` - User-protected routes
+- `auth/protected_path_admin.bru` - Admin-protected routes
+- `user/my_profile.bru` - User profile management
 
 ## Database Commands
 
@@ -108,31 +139,43 @@ Up-to-date NestJS-based API boilerplate with Prisma ORM, authentication, and tes
 
 ### Basic Workflow
 
-| Command                                                  | Description                                   |
-| -------------------------------------------------------- | --------------------------------------------- |
-| `git checkout -b feature/R-123`                          | Create new feature branch (use ticket number) |
-| `git add file1 file2`                                    | Stage target changes                          |
-| `git commit -m "[FEAT](user) Add createUser controller"` | Commit with conventional format               |
-| `git push origin feature/R-123`                          | Push changes to remote                        |
+| Command                                                 | Description                                   |
+| ------------------------------------------------------- | --------------------------------------------- |
+| `git checkout -b feature/R-123`                         | Create new feature branch (use ticket number) |
+| `git add file1 file2`                                   | Stage target changes                          |
+| `git commit -m "feat(user): add createUser controller"` | Commit with conventional format               |
+| `git push origin feature/R-123`                         | Push changes to remote                        |
 
 ### Modular Commit Workflow
 
-| Command                                                                                                                          | Description                                   |
-| -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `git checkout -b feature/R-123`                                                                                                  | Create new feature branch (use ticket number) |
-| `git add src/module-name/dto/*.dto.ts && git commit -m "[FEAT](module-name) Add data transfer objects"`                          | Commit DTOs                                   |
-| `git add src/module-name/module-name.service.ts && git commit -m "[FEAT](module-name) Implement core service logic"`             | Commit service changes                        |
-| `git add src/module-name/module-name.controller.ts && git commit -m "[FEAT](module-name) Add controller endpoints"`              | Commit controller changes                     |
-| `git add src/module-name/*.spec.ts && git commit -m "[TEST](module-name) Add unit tests"`                                        | Commit unit tests                             |
-| `git add test/module-name.e2e-spec.ts && git commit -m "[TEST](module-name) Add e2e tests"`                                      | Commit e2e tests                              |
-| `git add src/module-name/module-name.controller.ts && git commit -m "[DOC](module-name) Add swagger documentation to endpoints"` | Commit documentation updates to controller    |
-| `git add bruno/remal-api-1/user/create-module-name.bru && git commit -m [DOC](module-name) Add bruno collection of endpoints`    | Commit bruno collections used to test         |
-| `git add src/app.module.ts && git commit -m "[FEAT](app) Register module-name module"`                                           | Commit module registration                    |
-| `git push origin feature/R-123`                                                                                                  | Push all commits to remote                    |
+| Command                                                                                                              | Description                                   |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `git checkout -b feature/R-123`                                                                                      | Create new feature branch (use ticket number) |
+| `git add src/module/dto/*.dto.ts && git commit -m "feat(module): add data transfer objects"`                         | Commit DTOs                                   |
+| `git add src/module/module.service.ts && git commit -m "feat(module): implement core service logic"`                 | Commit service changes                        |
+| `git add src/module/module.controller.ts && git commit -m "feat(module): add controller endpoints"`                  | Commit controller changes                     |
+| `git add src/module/*.spec.ts && git commit -m "test(module): add unit tests"`                                       | Commit unit tests                             |
+| `git add test/module.e2e-spec.ts && git commit -m "test(module): add e2e tests"`                                     | Commit e2e tests                              |
+| `git add src/module/module.controller.ts && git commit -m "doc(module): add swagger documentation to endpoints"`     | Commit documentation updates to controller    |
+| `git add bruno/remal-api-1/user/create-module.bru && git commit -m "doc(module): add bruno collection of endpoints"` | Commit bruno collections used to test         |
+| `git add src/app.module.ts && git commit -m "feat(app): register module module"`                                     | Commit module registration                    |
+| `git push origin feature/R-123`                                                                                      | Push all commits to remote                    |
 
 ### Commit Types
 
-Valid commit prefixes: `[BUILD]`, `[DOC]`, `[FAKE]`, `[FEAT]`, `[FIX]`, `[REFACT]`, `[TEST]`, `[UPGRADE]`
+**Allowed Types**: `feat`, `fix`, `test`, `docs`, `refact`, `build`, `ci`, `chore`, `perf`, `revert`, `style`
+
+**Commit Convention with Commitlint**
+
+This project enforces conventional commit messages using Commitlint. All commits must follow this format:
+
+```bash
+# Format: type(scope): description
+git commit -m "feat(auth): add JWT refresh token rotation"
+git commit -m "fix(user): handle edge case in profile update"
+git commit -m "test(auth): add e2e tests for signup flow"
+git commit -m "docs(readme): update authentication section"
+```
 
 ### Advanced Git Commands
 
@@ -187,8 +230,20 @@ git push origin feature/R-123 --force-with-lease  # ⚠️ Use with caution
 │   │   └── filters/             # Exception filters
 │   ├── config/                  # Application configuration
 │   │   └── configuration.ts     # Environment configuration
+│   ├── auth/                    # Authentication module
+│   │   ├── dto/                 # Auth DTOs (signup, login, etc.)
+│   │   ├── guards/              # JWT guards and role guards
+│   │   ├── auth.controller.ts   # Auth endpoints
+│   │   ├── auth.module.ts       # Auth module definition
+│   │   ├── auth.service.ts      # Auth business logic
+│   │   ├── jwt.strategy.ts      # JWT validation strategy
+│   │   └── *.spec.ts            # Unit tests
+│   ├── mailer/                  # Email service module
+│   │   ├── templates/           # Email templates
+│   │   ├── mailer.service.ts    # Email sending logic
+│   │   └── mailer.module.ts     # Mailer module definition
 │   ├── prisma/                  # Database module, service
-│   ├── user/                    # User module (auth, registration)
+│   ├── user/                    # User module (profile management)
 │   │   ├── dto/                 # Data transfer objects
 │   │   ├── entities/            # Domain entities
 │   │   ├── utils/               # Helper functions
