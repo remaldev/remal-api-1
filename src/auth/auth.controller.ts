@@ -237,12 +237,19 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        access_token: {
-          type: 'string',
-          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Login successful' },
+        data: {
+          type: 'object',
+          properties: {
+            access_token: {
+              type: 'string',
+              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            },
+            token_type: { type: 'string', example: 'Bearer' },
+            scope: { type: 'string', example: 'read write' },
+          },
         },
-        token_type: { type: 'string', example: 'Bearer' },
-        scope: { type: 'string', example: 'read write' },
       },
     },
   })
@@ -300,7 +307,11 @@ export class AuthController {
       path: '/',
     })
 
-    return responseData
+    return {
+      success: true,
+      message: 'Login successful',
+      data: responseData,
+    }
   }
 
   @Roles(Role.ADMIN)

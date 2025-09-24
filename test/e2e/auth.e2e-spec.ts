@@ -501,9 +501,13 @@ describe('Auth Login (e2e)', () => {
         .expect(HttpStatus.OK)
 
       expect(response.body).toEqual({
-        access_token: expect.any(String),
-        token_type: 'Bearer',
-        scope: 'read write',
+        success: true,
+        message: 'Login successful',
+        data: {
+          access_token: expect.any(String),
+          token_type: 'Bearer',
+          scope: 'read write',
+        },
       })
 
       // Verify refresh token cookie is set
@@ -655,7 +659,7 @@ describe('Auth Login (e2e)', () => {
         })
         .expect(HttpStatus.OK)
 
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
       // Delete the user manually to simulate user deletion after token issuance
       await prismaService.user.delete({
         where: { id: verifiedUserToUnverifyLater.userId },
@@ -684,7 +688,7 @@ describe('Auth Login (e2e)', () => {
         })
         .expect(HttpStatus.OK)
 
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Unverify the user manually to simulate verification revocation after token issuance
       await prismaService.user.update({
@@ -712,8 +716,7 @@ describe('Auth Login (e2e)', () => {
           password: defaultVerifiedUser.password,
         })
         .expect(HttpStatus.OK)
-
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Access protected user profile endpoint
       const response = await request(app.getHttpServer())
@@ -742,8 +745,7 @@ describe('Auth Login (e2e)', () => {
           password: defaultVerifiedUser.password,
         })
         .expect(HttpStatus.OK)
-
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Access protected auth user route
       const response = await request(app.getHttpServer())
@@ -772,7 +774,7 @@ describe('Auth Login (e2e)', () => {
         })
         .expect(HttpStatus.OK)
 
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Try to access admin-only route
       await request(app.getHttpServer())
@@ -875,7 +877,7 @@ describe('Auth Login (e2e)', () => {
         })
         .expect(HttpStatus.OK)
 
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Mock prismaService.user.findUnique to throw an unexpected error (not a status error)
       const originalFindUnique = prismaService.user.findUnique
@@ -921,8 +923,7 @@ describe('Auth Login (e2e)', () => {
           password: adminUserData.password,
         })
         .expect(HttpStatus.OK)
-
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Admin should access admin route
       const adminResponse = await request(app.getHttpServer())
@@ -972,7 +973,7 @@ describe('Auth Login (e2e)', () => {
         })
         .expect(HttpStatus.OK)
 
-      const accessToken = loginResponse.body.access_token
+      const accessToken = loginResponse.body.data.access_token
 
       // Verify token works and returns correct user data via protected route
       const response = await request(app.getHttpServer())
