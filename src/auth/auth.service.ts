@@ -203,45 +203,13 @@ export class AuthService {
         )
       }
 
-      const now = Math.floor(Date.now() / 1000)
-      const accessTokenExpiresIn = 15 * 60 // 15 minutes
-      const refreshTokenExpiresIn = 7 * 24 * 60 * 60 // 7 days
+      const tokens = this.generateTokens(user.id, user.email, user.role)
 
-      // Generate access token (short-lived)
-      const accessTokenPayload = {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        type: 'access',
-        iat: now,
-      }
-
-      // Generate refresh token (long-lived)
-      const refreshTokenPayload = {
-        sub: user.id,
-        type: 'refresh',
-        iat: now,
-      }
-
-      const accessToken = this.jwtService.sign(accessTokenPayload, {
-        expiresIn: accessTokenExpiresIn,
-      })
-
-      const refreshToken = this.jwtService.sign(refreshTokenPayload, {
-        expiresIn: refreshTokenExpiresIn,
-      })
-
-      // Log successful login
       this.logger.log(
         `User logged in successfully: ${user.email} (ID: ${user.id})`,
       )
 
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        token_type: 'Bearer',
-        scope: 'read write',
-      }
+      return tokens
     } catch (error) {
       // If it's already an HTTP exception, re-throw it
       if (error.status) {
@@ -254,6 +222,72 @@ export class AuthService {
         error.stack,
       )
       throw new UnauthorizedException('Login failed. Please try again.')
+    }
+  }
+
+  private generateTokens(userId: string, email: string, role: string) {
+    const now = Math.floor(Date.now() / 1000)
+    const accessTokenExpiresIn = 15 * 60 // 15 minutes
+    const refreshTokenExpiresIn = 7 * 24 * 60 * 60 // 7 days
+
+    const accessTokenPayload = {
+      sub: userId,
+      email,
+      role,
+      type: 'access',
+      iat: now,
+    }
+    const refreshTokenPayload = {
+      sub: userId,
+      type: 'refresh',
+      iat: now,
+    }
+
+    const accessToken = this.jwtService.sign(accessTokenPayload, {
+      expiresIn: accessTokenExpiresIn,
+    })
+    const refreshToken = this.jwtService.sign(refreshTokenPayload, {
+      expiresIn: refreshTokenExpiresIn,
+    })
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_type: 'Bearer',
+      scope: 'read write',
+    }
+  }
+
+  async refreshTokens(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token missing')
+    }
+    try {
+      const payload = this.jwtService.verify(refreshToken)
+      if (!payload || payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid refresh token')
+      }
+
+      const user = await this.prismaService.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, email: true, role: true, isVerified: true },
+      })
+      if (!user) {
+        throw new UnauthorizedException('User not found')
+      }
+      if (!user.isVerified) {
+        throw new UnauthorizedException('Email not verified')
+      }
+
+      const tokens = this.generateTokens(user.id, user.email, user.role)
+      this.logger.log(`Refresh token rotated for user ${user.email}`)
+      return tokens
+    } catch (error) {
+      if (error.status) {
+        throw error
+      }
+      this.logger.error(`Refresh token failed: ${error.message}`)
+      throw new UnauthorizedException('Invalid or expired refresh token')
     }
   }
 }

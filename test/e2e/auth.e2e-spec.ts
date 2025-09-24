@@ -1001,4 +1001,176 @@ describe('Auth Login (e2e)', () => {
       })
     })
   })
+
+  describe('Token Refresh', () => {
+    it('should refresh tokens using cookie', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+
+      const refreshResponse = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.OK)
+
+      expect(refreshResponse.body.success).toBe(true)
+      expect(refreshResponse.body.data.access_token).toBeDefined()
+      expect(refreshResponse.body.data.token_type).toBe('Bearer')
+    })
+
+    it('should fail refresh with invalid token', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .query({ token: 'invalid.jwt.token' })
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.success).toBe(false)
+    })
+
+    it('should refresh tokens using query param token when no cookie is provided', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+      expect(refreshCookie).toBeDefined()
+      const refreshToken = refreshCookie?.split(';')[0].split('=')[1]
+
+      const refreshResponse = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .query({ token: refreshToken })
+        // intentionally not setting Cookie header
+        .expect(HttpStatus.OK)
+
+      expect(refreshResponse.body.success).toBe(true)
+      expect(refreshResponse.body.data.access_token).toBeDefined()
+    })
+
+    it('should return 401 when refresh token is missing (no cookie, no query)', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.success).toBe(false)
+      expect(res.body.message).toBe('Refresh token missing')
+    })
+
+    it('should return 401 when using an access token instead of refresh token', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+      const accessToken = loginResponse.body.data.access_token
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .query({ token: accessToken })
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.success).toBe(false)
+      expect(res.body.message).toBe('Invalid refresh token')
+    })
+
+    it('should return 401 when user has been deleted before refresh', async () => {
+      const userData = await createVerifiedUser({
+        email: 'refreshdel@example.com',
+        password: 'TestPass123!',
+        language: 'en' as const,
+      })
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: userData.email, password: userData.password })
+        .expect(HttpStatus.OK)
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+      await prismaService.user.delete({ where: { id: userData.userId } })
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.message).toBe('User not found')
+    })
+
+    it('should return 401 when user becomes unverified before refresh', async () => {
+      const userData = await createVerifiedUser({
+        email: 'refreshunv@example.com',
+        password: 'TestPass123!',
+        language: 'en' as const,
+      })
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: userData.email, password: userData.password })
+        .expect(HttpStatus.OK)
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+      // Mark user as unverified again
+      await prismaService.user.update({
+        where: { id: userData.userId },
+        data: { isVerified: false },
+      })
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.message).toBe('Email not verified')
+    })
+
+    it('should refresh successfully when cookie value is URL-encoded', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+      const cookies = loginResponse.headers['set-cookie']
+      const originalRefreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+      expect(originalRefreshCookie).toBeDefined()
+      if (!originalRefreshCookie) {
+        throw new Error('Expected refresh cookie to be set')
+      }
+      const rawToken = originalRefreshCookie.split(';')[0].split('=')[1]
+      const encoded = encodeURIComponent(rawToken)
+      const craftedCookie = `refreshToken=${encoded}; Path=/; HttpOnly; SameSite=Strict`
+
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', craftedCookie)
+        .expect(HttpStatus.OK)
+      expect(res.body.success).toBe(true)
+      expect(res.body.data.access_token).toBeDefined()
+    })
+
+    it('should return 401 when cookie present but refresh token empty', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', 'refreshToken=; Path=/; HttpOnly; SameSite=Strict')
+        .expect(HttpStatus.UNAUTHORIZED)
+      expect(res.body.message).toBe('Refresh token missing')
+    })
+  })
 })

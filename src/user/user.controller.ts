@@ -17,11 +17,11 @@ import { CurrentUser, Roles } from '../auth/decorators'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { RolesGuard } from '../auth/guards/roles.guard'
 import { AuthenticatedUser } from '../auth/interfaces'
-import { UserService } from './user.service'
 import {
-  SuccessEnvelopeDto,
   ErrorEnvelopeDto,
+  SuccessEnvelopeDto,
 } from '../common/dto/response-envelope.dto'
+import { UserService } from './user.service'
 
 @ApiTags('Users')
 @Controller('user')
