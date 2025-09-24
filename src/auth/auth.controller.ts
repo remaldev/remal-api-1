@@ -21,7 +21,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
-import { Response } from 'express'
+import { Request, Response } from 'express'
+import {
+  ErrorEnvelopeDto,
+  SuccessEnvelopeDto,
+} from '../common/dto/response-envelope.dto'
 import { AuthService } from './auth.service'
 import { CurrentUser, Public, Roles } from './decorators'
 import { LoginDto } from './dto/login.dto'
@@ -29,10 +33,6 @@ import { SignupDto } from './dto/signup.dto'
 import { Role } from './enums'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
-import {
-  ErrorEnvelopeDto,
-  SuccessEnvelopeDto,
-} from '../common/dto/response-envelope.dto'
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -196,6 +196,50 @@ export class AuthController {
     return {
       message: 'You have accessed a protected USER route',
       user,
+    }
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description:
+      'Rotate refresh token and issue a new access token. Requires valid refreshToken cookie.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, type: SuccessEnvelopeDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, type: ErrorEnvelopeDto })
+  async refresh(
+    @Res({ passthrough: true }) response: Response,
+    @Query('token') token?: string,
+    // read cookies directly from request via response.req
+  ) {
+    const req = response.req as Request
+    // Manually parse cookies (avoid adding cookie-parser dependency for now)
+    let cookieRefresh: string | undefined
+    const cookieHeader = req.headers.cookie
+    if (cookieHeader) {
+      cookieHeader.split(';').forEach((pair) => {
+        const [k, v] = pair.split('=')
+        if (k && k.trim() === 'refreshToken') {
+          cookieRefresh = decodeURIComponent(v || '')
+        }
+      })
+    }
+    const incoming = token || cookieRefresh
+    const result = await this.authService.refreshTokens(incoming || '')
+    const { refresh_token, ...rest } = result
+    response.cookie('refreshToken', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    })
+    return {
+      success: true,
+      message: 'Token refreshed',
+      data: rest,
     }
   }
 }
