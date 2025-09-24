@@ -17,8 +17,11 @@ import { CurrentUser, Roles } from '../auth/decorators'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { RolesGuard } from '../auth/guards/roles.guard'
 import { AuthenticatedUser } from '../auth/interfaces'
-import { UserResponseDto } from './dto/user-response.dto'
 import { UserService } from './user.service'
+import {
+  SuccessEnvelopeDto,
+  ErrorEnvelopeDto,
+} from '../common/dto/response-envelope.dto'
 
 @ApiTags('Users')
 @Controller('user')
@@ -41,11 +44,12 @@ export class UserController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User profile retrieved successfully',
-    type: UserResponseDto,
+    type: SuccessEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Authentication required',
+    type: ErrorEnvelopeDto,
   })
   getProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.userService.getUserById(user.id)

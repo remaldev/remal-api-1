@@ -61,6 +61,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     response.status(status).json({
+      success: false,
       statusCode: status,
       message,
       error,
