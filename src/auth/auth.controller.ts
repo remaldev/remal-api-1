@@ -242,4 +242,27 @@ export class AuthController {
       data: rest,
     }
   }
+
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Logout user',
+    description:
+      'Clears the refresh token cookie on the client to log the user out.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, type: SuccessEnvelopeDto })
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    })
+    return {
+      success: true,
+      message: 'Logged out successfully',
+      data: { loggedOut: true },
+    }
+  }
 }
