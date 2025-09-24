@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import * as packageJson from '../package.json'
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter'
+import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 /**
  * Apply common application configurations
@@ -16,6 +17,7 @@ export function bootstrapApp(app: INestApplication): void {
   )
 
   app.useGlobalFilters(new GlobalExceptionFilter())
+  app.useGlobalInterceptors(new ResponseInterceptor())
 
   const config = new DocumentBuilder()
     .setTitle(packageJson.name)

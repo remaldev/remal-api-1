@@ -725,14 +725,17 @@ describe('Auth Login (e2e)', () => {
         .expect(HttpStatus.OK)
 
       expect(response.body).toEqual({
-        id: defaultVerifiedUser.userId,
-        email: defaultVerifiedUser.email,
-        role: Role.USER,
-        name: null,
-        username: null,
-        isVerified: true,
-        createdAt: isValidDate,
-        updatedAt: isValidDate,
+        success: true,
+        data: {
+          id: defaultVerifiedUser.userId,
+          email: defaultVerifiedUser.email,
+          role: Role.USER,
+          name: null,
+          username: null,
+          isVerified: true,
+          createdAt: isValidDate,
+          updatedAt: isValidDate,
+        },
       })
     })
 
@@ -754,12 +757,15 @@ describe('Auth Login (e2e)', () => {
         .expect(HttpStatus.OK)
 
       expect(response.body).toEqual({
-        message: 'You have accessed a protected USER route',
-        user: {
-          id: defaultVerifiedUser.userId,
-          email: defaultVerifiedUser.email,
-          role: Role.USER,
-          isVerified: true,
+        success: true,
+        data: {
+          message: 'You have accessed a protected USER route',
+          user: {
+            id: defaultVerifiedUser.userId,
+            email: defaultVerifiedUser.email,
+            role: Role.USER,
+            isVerified: true,
+          },
         },
       })
     })
@@ -932,12 +938,15 @@ describe('Auth Login (e2e)', () => {
         .expect(HttpStatus.OK)
 
       expect(adminResponse.body).toEqual({
-        message: 'You have accessed a protected ADMIN route',
-        user: {
-          id: adminUserData.userId,
-          email: adminUserData.email,
-          role: Role.ADMIN,
-          isVerified: true,
+        success: true,
+        data: {
+          message: 'You have accessed a protected ADMIN route',
+          user: {
+            id: adminUserData.userId,
+            email: adminUserData.email,
+            role: Role.ADMIN,
+            isVerified: true,
+          },
         },
       })
 
@@ -948,12 +957,15 @@ describe('Auth Login (e2e)', () => {
         .expect(HttpStatus.OK)
 
       expect(userResponse.body).toEqual({
-        message: 'You have accessed a protected USER route',
-        user: {
-          id: adminUserData.userId,
-          email: adminUserData.email,
-          role: Role.ADMIN,
-          isVerified: true,
+        success: true,
+        data: {
+          message: 'You have accessed a protected USER route',
+          user: {
+            id: adminUserData.userId,
+            email: adminUserData.email,
+            role: Role.ADMIN,
+            isVerified: true,
+          },
         },
       })
 
@@ -981,7 +993,7 @@ describe('Auth Login (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(HttpStatus.OK)
 
-      expect(response.body.user).toEqual({
+      expect(response.body.data.user).toEqual({
         id: defaultVerifiedUser.userId,
         email: defaultVerifiedUser.email,
         role: Role.USER,
