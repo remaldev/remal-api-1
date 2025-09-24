@@ -29,6 +29,10 @@ import { SignupDto } from './dto/signup.dto'
 import { Role } from './enums'
 import { JwtAuthGuard } from './guards/jwt-auth.guard'
 import { RolesGuard } from './guards/roles.guard'
+import {
+  ErrorEnvelopeDto,
+  SuccessEnvelopeDto,
+} from '../common/dto/response-envelope.dto'
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -57,67 +61,17 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User registered successfully. Verification email sent.',
-    schema: {
-      type: 'object',
-      properties: {
-        success: {
-          type: 'boolean',
-          example: true,
-        },
-        message: {
-          type: 'string',
-          example:
-            'User registered successfully. Please check your email for verification code.',
-        },
-        data: {
-          type: 'object',
-          properties: {
-            userId: {
-              type: 'string',
-              example: 'clm1234567890abcdef',
-            },
-            email: {
-              type: 'string',
-              example: 'user@example.com',
-            },
-            verificationSent: {
-              type: 'boolean',
-              example: true,
-            },
-          },
-        },
-      },
-    },
+    type: SuccessEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data or missing required fields',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 400 },
-        message: {
-          type: 'string',
-          example: 'Email and password are required',
-        },
-        error: { type: 'string', example: 'Bad Request' },
-      },
-    },
+    type: ErrorEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
     description: 'Email address is already registered',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 409 },
-        message: {
-          type: 'string',
-          example: 'Email already in use',
-        },
-        error: { type: 'string', example: 'Conflict' },
-      },
-    },
+    type: ErrorEnvelopeDto,
   })
   async signup(@Body() signupDto: SignupDto) {
     const result = await this.authService.signup(signupDto)
@@ -160,53 +114,12 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Email verified successfully. User account is now active.',
-    schema: {
-      type: 'object',
-      properties: {
-        success: {
-          type: 'boolean',
-          example: true,
-        },
-        message: {
-          type: 'string',
-          example: 'Email verified successfully',
-        },
-        data: {
-          type: 'object',
-          properties: {
-            userId: {
-              type: 'string',
-              example: 'clm1234567890abcdef',
-            },
-            email: {
-              type: 'string',
-              example: 'user@example.com',
-            },
-            isVerified: {
-              type: 'boolean',
-              example: true,
-            },
-          },
-        },
-      },
-    },
+    type: SuccessEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid token, expired token, or user not found',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 400 },
-        message: {
-          oneOf: [
-            { type: 'string', example: 'Token has expired' },
-            { type: 'string', example: 'Invalid verification token' },
-          ],
-        },
-        error: { type: 'string', example: 'Bad Request' },
-      },
-    },
+    type: ErrorEnvelopeDto,
   })
   async verify(@Param('token') token: string, @Query('email') email: string) {
     const result = await this.authService.verifyAccountToken(email, token)
@@ -234,63 +147,17 @@ export class AuthController {
     status: HttpStatus.OK,
     description:
       'User authenticated successfully. The refresh token is set in an HTTP-only cookie (refreshToken).',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Login successful' },
-        data: {
-          type: 'object',
-          properties: {
-            access_token: {
-              type: 'string',
-              example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            },
-            token_type: { type: 'string', example: 'Bearer' },
-            scope: { type: 'string', example: 'read write' },
-          },
-        },
-      },
-    },
+    type: SuccessEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Invalid credentials or unverified email',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 401 },
-        message: {
-          oneOf: [
-            { type: 'string', example: 'Invalid email or password' },
-            {
-              type: 'string',
-              example: 'Please verify your email address before logging in',
-            },
-          ],
-        },
-        error: { type: 'string', example: 'Unauthorized' },
-      },
-    },
+    type: ErrorEnvelopeDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 400 },
-        message: {
-          type: 'array',
-          items: { type: 'string' },
-          example: [
-            'Please provide a valid email address',
-            'Password must be at least 6 characters long',
-          ],
-        },
-        error: { type: 'string', example: 'Bad Request' },
-      },
-    },
+    type: ErrorEnvelopeDto,
   })
   async login(
     @Body() loginDto: LoginDto,
