@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
   Post,
@@ -23,7 +24,6 @@ import {
 import { Response } from 'express'
 import { AuthService } from './auth.service'
 import { CurrentUser, Public, Roles } from './decorators'
-import { LoginResponseDto } from './dto/login-response.dto'
 import { LoginDto } from './dto/login.dto'
 import { SignupDto } from './dto/signup.dto'
 import { Role } from './enums'
@@ -220,6 +220,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User login',
     description:
@@ -232,22 +233,16 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.OK,
     description:
-      'User authenticated successfully. The refresh token is set in an HTTP-only cookie named refreshToken. The response body only contains the access token and related info.',
-    type: LoginResponseDto,
+      'User authenticated successfully. The refresh token is set in an HTTP-only cookie (refreshToken).',
     schema: {
       type: 'object',
       properties: {
-        success: {
-          type: 'boolean',
-          example: true,
-        },
-        message: {
+        access_token: {
           type: 'string',
-          example: 'Login successful',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
         },
-        data: {
-          $ref: '#/components/schemas/LoginResponseDto',
-        },
+        token_type: { type: 'string', example: 'Bearer' },
+        scope: { type: 'string', example: 'read write' },
       },
     },
   })

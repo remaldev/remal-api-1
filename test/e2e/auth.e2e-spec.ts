@@ -498,7 +498,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       expect(response.body).toEqual({
         access_token: expect.any(String),
@@ -653,7 +653,7 @@ describe('Auth Login (e2e)', () => {
           email: verifiedUserToUnverifyLater.email,
           password: verifiedUserToUnverifyLater.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
       // Delete the user manually to simulate user deletion after token issuance
@@ -682,7 +682,7 @@ describe('Auth Login (e2e)', () => {
           email: verifiedUserToUnverifyLater.email,
           password: verifiedUserToUnverifyLater.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -711,7 +711,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -741,7 +741,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -770,7 +770,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -873,7 +873,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -920,7 +920,7 @@ describe('Auth Login (e2e)', () => {
           email: adminUserData.email,
           password: adminUserData.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
@@ -970,7 +970,7 @@ describe('Auth Login (e2e)', () => {
           email: defaultVerifiedUser.email,
           password: defaultVerifiedUser.password,
         })
-        .expect(HttpStatus.CREATED)
+        .expect(HttpStatus.OK)
 
       const accessToken = loginResponse.body.access_token
 
