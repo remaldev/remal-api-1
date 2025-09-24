@@ -1173,4 +1173,46 @@ describe('Auth Login (e2e)', () => {
       expect(res.body.message).toBe('Refresh token missing')
     })
   })
+
+  describe('Logout', () => {
+    it('should clear refresh cookie on logout', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+
+      const logoutResponse = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.OK)
+
+      // Set-Cookie header with Max-Age=0 or Expires in the past indicates clearing
+      const setCookies = logoutResponse.headers['set-cookie']
+      const cleared = (Array.isArray(setCookies) ? setCookies : [setCookies])
+        .filter(Boolean)
+        .some(
+          (c) => c.startsWith('refreshToken=') && /Expires=|Max-Age=0/.test(c),
+        )
+      expect(cleared).toBe(true)
+      expect(logoutResponse.body).toEqual({
+        success: true,
+        message: 'Logged out successfully',
+        data: { loggedOut: true },
+      })
+    })
+
+    it('should be idempotent when no cookie present', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .expect(HttpStatus.OK)
+      expect(res.body.success).toBe(true)
+    })
+  })
 })
