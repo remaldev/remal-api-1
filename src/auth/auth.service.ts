@@ -1,3 +1,4 @@
+import { createHash, randomInt } from 'node:crypto'
 import {
   BadRequestException,
   ConflictException,
@@ -8,7 +9,6 @@ import {
 import { JwtService } from '@nestjs/jwt'
 import { TokenType } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
-import { randomInt } from 'node:crypto'
 import { MailerService } from '../mailer/mailer.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { LoginDto } from './dto/login.dto'
@@ -204,6 +204,8 @@ export class AuthService {
       }
 
       const tokens = this.generateTokens(user.id, user.email, user.role)
+      // Persist hashed refresh token (single active per user)
+      await this.saveHashedRefreshToken(user.id, tokens.refresh_token)
 
       this.logger.log(
         `User logged in successfully: ${user.email} (ID: ${user.id})`,
@@ -278,8 +280,25 @@ export class AuthService {
       if (!user.isVerified) {
         throw new UnauthorizedException('Email not verified')
       }
-
+      // Validate stored hashed token
+      const incomingHash = this.hashToken(refreshToken)
+      const stored = await this.prismaService.token.findFirst({
+        where: { userId: user.id, type: 'REFRESH' },
+      })
+      if (!stored || stored.token !== incomingHash) {
+        // Possible reuse or invalid token: cleanup any existing record to force re-login
+        await this.prismaService.token.deleteMany({
+          where: { userId: user.id, type: 'REFRESH' },
+        })
+        throw new UnauthorizedException('Invalid or expired refresh token')
+      }
+      // Rotation: generate new pair & replace stored hash
       const tokens = this.generateTokens(user.id, user.email, user.role)
+      await this.replaceHashedRefreshToken(
+        user.id,
+        stored.token,
+        tokens.refresh_token,
+      )
       this.logger.log(`Refresh token rotated for user ${user.email}`)
       return tokens
     } catch (error) {
@@ -288,6 +307,65 @@ export class AuthService {
       }
       this.logger.error(`Refresh token failed: ${error.message}`)
       throw new UnauthorizedException('Invalid or expired refresh token')
+    }
+  }
+
+  private hashToken(raw: string) {
+    return createHash('sha256').update(raw).digest('hex')
+  }
+
+  private async saveHashedRefreshToken(userId: string, rawToken: string) {
+    const hash = this.hashToken(rawToken)
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+    // Ensure only one REFRESH token per user
+    await this.prismaService.token.deleteMany({
+      where: { userId, type: 'REFRESH' },
+    })
+    await this.prismaService.token.create({
+      data: {
+        token: hash,
+        userId,
+        type: 'REFRESH',
+        expiresAt: new Date(Date.now() + sevenDaysMs),
+      },
+    })
+  }
+
+  private async replaceHashedRefreshToken(
+    userId: string,
+    previousHash: string,
+    newRawToken: string,
+  ) {
+    const newHash = this.hashToken(newRawToken)
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+    // Replace token atomically: delete then create (composite id prevents simple update by hash change if changed semantics later)
+    await this.prismaService.$transaction([
+      this.prismaService.token.deleteMany({
+        where: { userId, type: 'REFRESH', token: previousHash },
+      }),
+      this.prismaService.token.create({
+        data: {
+          token: newHash,
+          userId,
+          type: 'REFRESH',
+          expiresAt: new Date(Date.now() + sevenDaysMs),
+        },
+      }),
+    ])
+  }
+
+  async revokeRefreshToken(rawToken: string) {
+    try {
+      const payload = this.jwtService.verify(rawToken)
+      if (!payload || payload.type !== 'refresh') {
+        return
+      }
+      const hash = this.hashToken(rawToken)
+      await this.prismaService.token.deleteMany({
+        where: { userId: payload.sub, type: 'REFRESH', token: hash },
+      })
+    } catch {
+      // ignore invalid token on logout
     }
   }
 }

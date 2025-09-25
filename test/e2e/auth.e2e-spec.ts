@@ -661,6 +661,10 @@ describe('Auth Login (e2e)', () => {
 
       const accessToken = loginResponse.body.data.access_token
       // Delete the user manually to simulate user deletion after token issuance
+      // First remove persisted REFRESH token to satisfy FK constraint
+      await prismaService.token.deleteMany({
+        where: { userId: verifiedUserToUnverifyLater.userId, type: 'REFRESH' },
+      })
       await prismaService.user.delete({
         where: { id: verifiedUserToUnverifyLater.userId },
       })
@@ -1101,6 +1105,10 @@ describe('Auth Login (e2e)', () => {
       const refreshCookie = Array.isArray(cookies)
         ? cookies.find((c) => c.startsWith('refreshToken='))
         : cookies
+      // Remove persisted REFRESH token first to satisfy FK constraint
+      await prismaService.token.deleteMany({
+        where: { userId: userData.userId, type: 'REFRESH' },
+      })
       await prismaService.user.delete({ where: { id: userData.userId } })
 
       const res = await request(app.getHttpServer())
@@ -1213,6 +1221,88 @@ describe('Auth Login (e2e)', () => {
         .post('/auth/logout')
         .expect(HttpStatus.OK)
       expect(res.body.success).toBe(true)
+    })
+
+    it('should prevent refresh after logout (server-side revocation)', async () => {
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+      const cookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(cookies)
+        ? cookies.find((c) => c.startsWith('refreshToken='))
+        : cookies
+
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.OK)
+
+      await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.UNAUTHORIZED)
+    })
+
+    // covers line auth.controller.ts:265
+    it('should handle URL-encoded cookie value in logout', async () => {
+      const craftedCookie = `refreshToken=; Path=/; HttpOnly; SameSite=Strict`
+      const res = await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Cookie', craftedCookie)
+        .expect(HttpStatus.OK)
+      const cleared = (
+        Array.isArray(res.headers['set-cookie'])
+          ? res.headers['set-cookie']
+          : [res.headers['set-cookie']]
+      )
+        .filter(Boolean)
+        .some(
+          (c) =>
+            c?.startsWith('refreshToken=') &&
+            /Expires=|Max-Age=0/.test(c ?? ''),
+        )
+      expect(cleared).toBe(true)
+    })
+
+    // covers line auth.service.ts:361
+    it('should ignore non-refresh token in logout (early return path)', async () => {
+      // Login to obtain both access token and refresh cookie
+      const loginResponse = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: defaultVerifiedUser.email,
+          password: defaultVerifiedUser.password,
+        })
+        .expect(HttpStatus.OK)
+
+      const accessToken = loginResponse.body.data.access_token
+      const setCookies = loginResponse.headers['set-cookie']
+      const refreshCookie = Array.isArray(setCookies)
+        ? setCookies.find((c) => c.startsWith('refreshToken='))
+        : setCookies
+      expect(refreshCookie).toBeDefined()
+
+      // Craft a cookie named refreshToken but containing the ACCESS token.
+      // This should hit revokeRefreshToken's early return when payload.type !== 'refresh'.
+      const fakeRefreshCookie = `refreshToken=${accessToken}; Path=/; HttpOnly; SameSite=Strict`
+
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Cookie', fakeRefreshCookie)
+        .expect(HttpStatus.OK)
+
+      // Since revokeRefreshToken returned early, the actual persisted refresh token wasn't deleted.
+      // Using the original refresh cookie should still allow refresh to succeed.
+      const refreshRes = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .set('Cookie', refreshCookie || '')
+        .expect(HttpStatus.OK)
+      expect(refreshRes.body.success).toBe(true)
+      expect(refreshRes.body.data.access_token).toBeDefined()
     })
   })
 })

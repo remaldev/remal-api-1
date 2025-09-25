@@ -252,7 +252,26 @@ export class AuthController {
       'Clears the refresh token cookie on the client to log the user out.',
   })
   @ApiResponse({ status: HttpStatus.OK, type: SuccessEnvelopeDto })
-  logout(@Res({ passthrough: true }) response: Response) {
+  async logout(@Res({ passthrough: true }) response: Response) {
+    // Best effort: remove persisted REFRESH token if cookie is present
+    try {
+      const req = response.req as Request
+      const cookieHeader = req.headers.cookie
+      let cookieRefresh: string | undefined
+      if (cookieHeader) {
+        cookieHeader.split(';').forEach((pair) => {
+          const [k, v] = pair.split('=')
+          if (k && k.trim() === 'refreshToken') {
+            cookieRefresh = decodeURIComponent(v || '')
+          }
+        })
+      }
+      if (cookieRefresh) {
+        await this.authService.revokeRefreshToken(cookieRefresh)
+      }
+    } catch (_) {
+      // ignore errors during logout revocation to keep endpoint idempotent
+    }
     response.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
