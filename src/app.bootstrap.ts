@@ -1,5 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { json, urlencoded } from 'express'
+import helmet from 'helmet'
 import * as packageJson from '../package.json'
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
@@ -9,6 +11,18 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
  * This function is used by both main.ts and test setup
  */
 export function bootstrapApp(app: INestApplication): void {
+  // Security headers
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // keep Swagger working; enable with proper config if needed
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  )
+
+  // Body size limits (defensive)
+  app.use(json({ limit: '1mb' }))
+  app.use(urlencoded({ limit: '1mb', extended: true }))
+
   app.useGlobalPipes(
     new ValidationPipe({
       forbidNonWhitelisted: true,
@@ -35,5 +49,20 @@ export function bootstrapApp(app: INestApplication): void {
     },
   })
 
-  app.enableCors()
+  // CORS hardening
+  const rawOrigins = process.env.CORS_ORIGINS || ''
+  const origins = rawOrigins
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  app.enableCors({
+    origin: origins.length
+      ? origins
+      : [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/],
+    credentials: process.env.CORS_CREDENTIALS !== 'false',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
+  })
 }
