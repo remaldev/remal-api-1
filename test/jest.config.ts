@@ -35,6 +35,8 @@ const jestConfig: JestConfig = {
     '!<rootDir>/src/**/*.d.ts',
     '!<rootDir>/src/common/**',
     '!<rootDir>/src/config/**',
+    '!<rootDir>/src/app.bootstrap.ts',
+    '!<rootDir>/src/common/',
   ],
   coverageReporters: [
     'text',
