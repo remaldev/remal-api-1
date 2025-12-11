@@ -11,7 +11,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DB_POSTGRE_URI")
 }
 
 enum Role {
