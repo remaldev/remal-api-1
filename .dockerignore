@@ -24,7 +24,7 @@ docker-compose*
 .dockerignore
 
 # Environment files
-.env*
+.env.test
 
 # Build outputs
 dist

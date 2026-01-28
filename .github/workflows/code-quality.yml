@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '24.7.0'
-  NPM_VERSION: '11.5.2'
+  NODE_VERSION: "24.13.0"
+  NPM_VERSION: "11.6.2"
 
 jobs:
   setup:
@@ -16,17 +16,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js with cache
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
-      
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
       - name: Install global npm
         run: npm install -g npm@${{ env.NPM_VERSION }}
-      
+
       # Try to restore the cache first
       - name: Restore node_modules cache
         id: cache-node-modules
@@ -38,12 +38,12 @@ jobs:
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-modules-
-      
+
       # Only install dependencies if cache miss
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
-      
+
       # Save cache after install (if we had to install)
       - name: Cache node_modules
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
@@ -60,12 +60,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      
+
       # Restore cached node_modules
       - name: Restore node_modules
         uses: actions/cache/restore@v3
@@ -75,13 +75,13 @@ jobs:
             ~/.npm
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
           fail-on-cache-miss: true
-      
+
       - name: Cache Prisma
         uses: actions/cache@v3
         with:
           path: node_modules/.prisma
           key: ${{ runner.os }}-prisma-${{ hashFiles('prisma/schema.prisma') }}
-      
+
       - name: Run Linter
         run: npm run lint
 
@@ -94,12 +94,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
- 
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      
+
       # Restore cached node_modules
       - name: Restore node_modules
         uses: actions/cache/restore@v3
@@ -109,7 +109,7 @@ jobs:
             ~/.npm
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
           fail-on-cache-miss: true
-      
+
       - name: Check Dependencies
         id: depsCheckStep
         run: npm run deps:outdated:check
@@ -119,7 +119,7 @@ jobs:
         run: node .github/scripts/comment-bot-deps.js
 
       - name: Post outdated dependencies comment
-        if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' && github.event_name == 'pull_request'}} 
+        if: ${{ failure() && steps.depsCheckStep.outcome == 'failure' && github.event_name == 'pull_request'}}
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: outdated-packages-report.md
@@ -143,7 +143,7 @@ jobs:
       postgres:
         image: postgres:17.4
         ports:
-          - 5432:5432
+          - 5433:5432
         env:
           POSTGRES_USER: uzer
           POSTGRES_PASSWORD: psswd
@@ -158,13 +158,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Load Test Env file
         run: |
-            echo "${{ secrets.ENV_TEST }}" | base64 -d > .env.test
-            export $(cat .env.test | xargs)
+          echo "${{ secrets.ENV_TEST }}" | base64 -d > .env.test
+          export $(cat .env.test | xargs)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-      
+
       # Restore cached node_modules
       - name: Restore node_modules
         uses: actions/cache/restore@v3
@@ -182,10 +182,11 @@ jobs:
           key: ${{ runner.os }}-jest-${{ hashFiles('**/*.test.js', '**/*.spec.js') }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Run Prisma Migrations
-        run: npm run prisma:migrate:deploy |
-          npm run prisma:generate
+        run: npm run prisma:generate |
+          npm run prisma:migrate:deploy
         env:
-          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5433/test_db?schema=public
+          DATABASE_URL: postgresql://uzer:psswd@localhost:5433/test_db?schema=public
           NODE_ENV: test
 
       - name: Run Tests with Coverage
@@ -194,14 +195,14 @@ jobs:
           CI: true
           NODE_ENV: test
           JEST_CACHE_DIRECTORY: .jest-cache
-          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
+          DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5433/test_db?schema=public
 
       - name: Generate test-coverage alert comment
         if: ${{ always() && github.event_name == 'pull_request' }}
         run: node .github/scripts/comment-bot-coverage.js
 
       - name: Post test-coverage result comment
-        if: ${{ always() && github.event_name == 'pull_request' }} 
+        if: ${{ always() && github.event_name == 'pull_request' }}
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: coverage-comment.md

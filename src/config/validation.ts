@@ -1,9 +1,7 @@
 import * as Joi from 'joi'
 
 export const configValidationSchema = Joi.object({
-  NODE_ENV: Joi.string()
-    .valid('development', 'test', 'production', 'prod')
-    .default('development'),
+  NODE_ENV: Joi.string().valid('local', 'test', 'prod').default('local'),
 
   PORT: Joi.number().port().default(3000),
   LOG_LEVEL: Joi.string()
