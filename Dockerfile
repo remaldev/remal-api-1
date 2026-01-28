@@ -1,5 +1,5 @@
 # Development stage
-FROM node:24.7.0-alpine AS development
+FROM node:24.13.0-alpine AS development
 
 WORKDIR /app
 
@@ -11,7 +11,8 @@ RUN npm ci
 
 # Copy source code
 COPY . .
-
+# copy env files if any
+COPY .env.* ./
 # Generate Prisma client
 RUN npm run prisma:generate
 
@@ -23,7 +24,7 @@ EXPOSE 3000
 CMD ["sh", "-c", "npm run start:dev"]
 
 # Production build stage
-FROM node:24.7.0-alpine AS build
+FROM node:24.13.0-alpine AS build
 
 WORKDIR /app
 
@@ -43,7 +44,7 @@ RUN npm run prisma:generate
 RUN npm run build
 
 # Production stage
-FROM node:24.7.0-alpine AS production
+FROM node:24.13.0-alpine AS production
 
 WORKDIR /app
 

@@ -17,7 +17,7 @@ Up-to-date NestJS-based API boilerplate with Prisma ORM, authentication, and tes
 
 ## Setup
 
-**Prerequisites:** Volta, Node.js (`v24.7.0`), npm (_`v11.5.2`_), PostgreSQL
+**Prerequisites:** Volta, Node.js (`v24.13.0`), npm (_`v11.6.2`_), PostgreSQL
 
 1. **Create a new repository from template:**
 
