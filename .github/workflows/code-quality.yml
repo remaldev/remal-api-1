@@ -182,7 +182,8 @@ jobs:
           key: ${{ runner.os }}-jest-${{ hashFiles('**/*.test.js', '**/*.spec.js') }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Run Prisma Migrations
-        run: npm run prisma:migrate:deploy
+        run: npm run prisma:migrate:deploy |
+          npm run prisma:generate
         env:
           DB_POSTGRE_URI: postgresql://uzer:psswd@localhost:5432/test_db?schema=public
           NODE_ENV: test
