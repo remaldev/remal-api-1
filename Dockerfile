@@ -26,16 +26,19 @@ CMD ["sh", "-c", "npm run start:dev"]
 # Production build stage
 FROM node:24.13.0-alpine AS build
 
+ENV HUSKY=0
+
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
 # Install all dependencies
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Copy source code
 COPY . .
+COPY .env.* ./
 
 # Generate Prisma client
 RUN npm run prisma:generate
@@ -48,15 +51,17 @@ FROM node:24.13.0-alpine AS production
 
 WORKDIR /app
 
+# Use production environment
+ENV NODE_ENV=production
+
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Copy production node_modules built earlier
+COPY --from=build /app/node_modules ./node_modules
 
 # Copy built application from build stage
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy prisma directory for migrations
 COPY prisma ./prisma
