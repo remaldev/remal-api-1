@@ -12,20 +12,12 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<UserResponseDto | null> {
-    const user = await this.prismaService.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        name: true,
-        role: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false, // Don't include password
-      },
-    })
+    const user = await this.prismaService.user.findUnique({ where: { id } })
+    return user ? toUserResponseDto(user) : null
+  }
+
+  async getUserByEmail(email: string): Promise<UserResponseDto | null> {
+    const user = await this.prismaService.user.findUnique({ where: { email } })
     return user ? toUserResponseDto(user) : null
   }
 }

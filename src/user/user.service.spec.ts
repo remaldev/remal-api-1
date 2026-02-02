@@ -66,17 +66,6 @@ describe('UserService', () => {
       // Assert
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          name: true,
-          role: true,
-          isVerified: true,
-          createdAt: true,
-          updatedAt: true,
-          password: false,
-        },
       })
       expect(result).toEqual(expectedUserResponse)
     })
@@ -92,19 +81,22 @@ describe('UserService', () => {
       // Assert
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: nonExistentUserId },
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          name: true,
-          role: true,
-          isVerified: true,
-          createdAt: true,
-          updatedAt: true,
-          password: false,
-        },
       })
       expect(result).toBeNull()
+    })
+
+    it('should return null when user is not found', async () => {
+      // Arrange
+      ;(prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser)
+
+      // Act
+      const result = await userService.getUserByEmail(mockUser.email)
+
+      // Assert
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: mockUser.email },
+      })
+      expect(result).toEqual(expectedUserResponse)
     })
   })
 })

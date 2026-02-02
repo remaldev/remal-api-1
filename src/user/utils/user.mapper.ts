@@ -6,6 +6,6 @@ export function toUserResponseDto(
   user: Omit<User, 'password'>,
 ): UserResponseDto {
   return plainToClass(UserResponseDto, user, {
-    excludeExtraneousValues: false,
+    excludeExtraneousValues: true,
   })
 }
