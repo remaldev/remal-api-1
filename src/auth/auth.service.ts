@@ -6,9 +6,11 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { TokenType } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
+import { StringValue } from 'ms'
 import { MailerService } from '../mailer/mailer.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { LoginDto } from './dto/login.dto'
@@ -20,15 +22,17 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name)
   private readonly mailerService: MailerService
   private readonly jwtService: JwtService
-
+  private readonly configService: ConfigService
   constructor(
     prismaService: PrismaService,
     mailerService: MailerService,
     jwtService: JwtService,
+    configService: ConfigService,
   ) {
     this.prismaService = prismaService
     this.mailerService = mailerService
     this.jwtService = jwtService
+    this.configService = configService
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -41,7 +45,7 @@ export class AuthService {
     return randomInt(100000, 1000000).toString()
   }
 
-  async signup(signupDto: SignupDto) {
+  async signup(signupDto: SignupDto, isVerified = false) {
     const { email, password, language } = signupDto
 
     const verificationToken = this.generateVerificationToken()
@@ -52,6 +56,7 @@ export class AuthService {
           data: {
             email,
             password: await this.hashPassword(password),
+            isVerified,
           },
         })
         const ten_minutes_in_ms = 10 * 60 * 1000 // 10 minutes in milliseconds
@@ -67,15 +72,15 @@ export class AuthService {
         this.logger.log(
           `User created with ID: ${user.id} | Email: ${user.email} | Verification Token: ${verificationToken}`,
         )
-
-        await this.mailerService.sendVerificationCodeMail(
-          user.email,
-          language,
-          {
-            codeDigits: verificationToken.split(''),
-          },
-        )
-
+        if (!isVerified) {
+          await this.mailerService.sendVerificationCodeMail(
+            user.email,
+            language,
+            {
+              codeDigits: verificationToken.split(''),
+            },
+          )
+        }
         return {
           userId: user.id,
           email: user.email,
@@ -229,9 +234,9 @@ export class AuthService {
 
   private generateTokens(userId: string, email: string, role: string) {
     const now = Math.floor(Date.now() / 1000)
-    const accessTokenExpiresIn = 15 * 60 // 15 minutes
+    const accessTokenExpiresIn =
+      this.configService.getOrThrow<StringValue>('JWT_EXPIRES')
     const refreshTokenExpiresIn = 7 * 24 * 60 * 60 // 7 days
-
     const accessTokenPayload = {
       sub: userId,
       email,
@@ -244,7 +249,6 @@ export class AuthService {
       type: 'refresh',
       iat: now,
     }
-
     const accessToken = this.jwtService.sign(accessTokenPayload, {
       expiresIn: accessTokenExpiresIn,
     })
