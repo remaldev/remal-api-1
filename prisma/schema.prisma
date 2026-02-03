@@ -59,5 +59,23 @@ model Shop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  products Product[]
+
   @@index([ownerId])
+}
+
+model Product {
+  id       String @id @default(cuid())
+  name     String
+  price    Float
+  barcode  String
+  quantity Int    @default(0)
+  shopId   String
+  shop     Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, barcode])
+  @@index([shopId])
 }
