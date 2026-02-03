@@ -23,6 +23,7 @@ export class AuthService {
   private readonly mailerService: MailerService
   private readonly jwtService: JwtService
   private readonly configService: ConfigService
+
   constructor(
     prismaService: PrismaService,
     mailerService: MailerService,
@@ -49,44 +50,61 @@ export class AuthService {
     const { email, password, language } = signupDto
 
     const verificationToken = this.generateVerificationToken()
+    const hashedPassword = await this.hashPassword(password)
 
     try {
-      return await this.prismaService.$transaction(async (prisma) => {
-        const user = await prisma.user.create({
-          data: {
-            email,
-            password: await this.hashPassword(password),
-            isVerified,
-          },
-        })
-        const ten_minutes_in_ms = 10 * 60 * 1000 // 10 minutes in milliseconds
-        await prisma.token.create({
-          data: {
-            token: verificationToken,
-            type: TokenType.EMAIL_VERIFICATION,
-            userId: user.id,
-            expiresAt: new Date(Date.now() + ten_minutes_in_ms), // 10 minutes from now
-          },
-        })
-
-        this.logger.log(
-          `User created with ID: ${user.id} | Email: ${user.email} | Verification Token: ${verificationToken}`,
-        )
-        if (!isVerified) {
-          await this.mailerService.sendVerificationCodeMail(
-            user.email,
-            language,
-            {
-              codeDigits: verificationToken.split(''),
+      const result = await this.prismaService.$transaction(
+        async (prisma) => {
+          const user = await prisma.user.create({
+            data: {
+              email,
+              password: hashedPassword,
+              isVerified,
             },
+          })
+          const ten_minutes_in_ms = 10 * 60 * 1000 // 10 minutes in milliseconds
+          await prisma.token.create({
+            data: {
+              token: verificationToken,
+              type: TokenType.EMAIL_VERIFICATION,
+              userId: user.id,
+              expiresAt: new Date(Date.now() + ten_minutes_in_ms), // 10 minutes from now
+            },
+          })
+
+          this.logger.log(
+            `User created with ID: ${user.id} | Email: ${user.email} | Verification Token: ${verificationToken}`,
+          )
+
+          return user
+        },
+        {
+          // Use a longer timeout for user creation transaction
+          timeout: 15000, // 15 seconds
+          maxWait: 10000, // wait up to 10s to acquire a connection
+        },
+      )
+      let verificationSent = false
+
+      if (!isVerified) {
+        try {
+          await this.mailerService.sendVerificationCodeMail(
+            result.email,
+            language,
+            { codeDigits: verificationToken.split('') },
+          )
+          verificationSent = true
+        } catch (mailError) {
+          this.logger.error(
+            `Verification email failed for ${result.email}: ${mailError.message}`,
           )
         }
-        return {
-          userId: user.id,
-          email: user.email,
-          verificationSent: true,
-        }
-      })
+      }
+      return {
+        userId: result.id,
+        email: result.email,
+        verificationSent,
+      }
     } catch (error) {
       // Handle Prisma-specific errors and convert to HTTP exceptions
       if (error.code === 'P2002') {
