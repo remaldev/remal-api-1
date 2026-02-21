@@ -38,4 +38,11 @@ export class ShopService {
     })
     return shop ? toShopResponseDto(shop) : null
   }
+
+  async getShopsByOwnerId(ownerId: string): Promise<ShopResponseDto[]> {
+    const shops = await this.prismaService.shop.findMany({
+      where: { ownerId },
+    })
+    return shops.map(toShopResponseDto)
+  }
 }
