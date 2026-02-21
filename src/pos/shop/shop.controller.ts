@@ -23,4 +23,9 @@ export class ShopController {
   findOne(@Param('id') id: string) {
     return this.shopService.getShopById(id)
   }
+
+  @Get('/')
+  findMyShops(@CurrentUser('id') userId: string) {
+    return this.shopService.getShopsByOwnerId(userId)
+  }
 }
