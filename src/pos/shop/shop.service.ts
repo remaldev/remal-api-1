@@ -31,4 +31,11 @@ export class ShopService {
     })
     return toShopResponseDto(shop)
   }
+
+  async getShopById(id: string): Promise<ShopResponseDto | null> {
+    const shop = await this.prismaService.shop.findUnique({
+      where: { id },
+    })
+    return shop ? toShopResponseDto(shop) : null
+  }
 }
