@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { CurrentUser } from '../../auth/decorators'
 import { CreateShopDto } from './shop.dto'
 import { ShopService } from './shop.service'
@@ -17,5 +17,10 @@ export class ShopController {
     @CurrentUser('id') userId: string,
   ) {
     return this.shopService.createShop(createShopDto, userId)
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.shopService.getShopById(id)
   }
 }
