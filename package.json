@@ -33,7 +33,7 @@
     "prisma:migrate": "npm run env -- prisma migrate dev",
     "prisma:migrate:reset": "npm run env -- -- prisma migrate reset --force",
     "prisma:studio": "npm run env -- -- prisma studio",
-    "prisma:seed": "npm run env -- -- prisma db seed",
+    "prisma:seed": "npm run env -- -- ts-node -r tsconfig-paths/register prisma/prisma.seed.ts",
     "prisma:migrate:deploy": "npm run env -- -- prisma migrate deploy",
     "prepare": "husky",
     "deps:check": "npx -y depcheck@1.4.3",
