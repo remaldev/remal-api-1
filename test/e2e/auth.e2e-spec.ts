@@ -283,13 +283,20 @@ describe('Auth Signup (e2e)', () => {
       await request(app.getHttpServer())
         .post('/auth/signup')
         .send(validSignupDto)
-        .expect(HttpStatus.BAD_REQUEST)
+        .expect(HttpStatus.CREATED)
 
-      // Verify user and token were not created due to transaction rollback
       const user = await prismaService.user.findUnique({
         where: { email: validSignupDto.email },
+        select: { email: true, isVerified: true, Token: true },
       })
-      expect(user).toBeNull()
+      // verify that user exists but is not verified
+      expect(user).toMatchObject({
+        email: validSignupDto.email,
+        isVerified: false,
+        Token: expect.arrayContaining([
+          expect.objectContaining({ type: 'EMAIL_VERIFICATION' }),
+        ]),
+      })
     })
 
     it('should return 400 when verifying token after user is deleted', async () => {
