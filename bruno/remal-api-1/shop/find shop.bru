@@ -1,0 +1,16 @@
+meta {
+  name: find shop
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/pos/shops
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

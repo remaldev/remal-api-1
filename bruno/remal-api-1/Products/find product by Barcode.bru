@@ -1,0 +1,20 @@
+meta {
+  name: find product by Barcode
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/pos/products/barcode/0000000000
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-shop-id: cmlh5ux160009s8irq5bmqsg4
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

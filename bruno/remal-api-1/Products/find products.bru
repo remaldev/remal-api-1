@@ -1,0 +1,25 @@
+meta {
+  name: find products
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/pos/products/
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~page: 1
+  ~limit: 1
+}
+
+headers {
+  X-Shop-Id: cmlh5ux160009s8irq5bmqsg4
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -12,12 +12,11 @@ post {
 
 body:json {
   {
-    "email": "test@remal.ma",
+    "email": "test@remal.dev",
     "password": "TestPsswd+1"
   }
 }
 
 vars:post-response {
-  access_token: res.body.access_token
-  refresh_token: res.body.refresh_token
+  access_token: res.body?.data?.access_token
 }
