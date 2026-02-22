@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -10,7 +11,7 @@ import {
 import { CurrentShop } from '../shop/shop.decorator'
 import { ShopResponseDto } from '../shop/shop.dto'
 import { ShopContextGuard } from '../shop/shop.guard'
-import { CreateProductDto } from './product.dto'
+import { CreateProductDto, UpdateProductDto } from './product.dto'
 import { ProductService } from './product.service'
 
 @UseGuards(ShopContextGuard)
@@ -53,5 +54,18 @@ export class ProductController {
     @CurrentShop() shop: ShopResponseDto,
   ) {
     return this.productService.getProductByBarcode(barcode, shop.id)
+  }
+
+  @Patch('/:productId')
+  patchProduct(
+    @CurrentShop() shop: ShopResponseDto,
+    @Param('productId') productId: string,
+    @Body('data') updateProductDto: UpdateProductDto,
+  ) {
+    return this.productService.updateProduct(
+      productId,
+      shop.id,
+      updateProductDto,
+    )
   }
 }
