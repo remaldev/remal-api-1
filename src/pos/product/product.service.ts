@@ -21,4 +21,14 @@ export class ProductService {
       },
     })
   }
+
+  getProducts(shopId: string, page: number, limit: number) {
+    return this.prismaService.product.findMany({
+      where: {
+        shopId: shopId,
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    })
+  }
 }
