@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
 import { CurrentShop } from '../shop/shop.decorator'
 import { ShopResponseDto } from '../shop/shop.dto'
 import { ShopContextGuard } from '../shop/shop.guard'
@@ -20,5 +20,14 @@ export class ProductController {
     @CurrentShop() shop: ShopResponseDto,
   ) {
     return this.productService.createProduct(createProductDto, shop.id)
+  }
+
+  @Get('/')
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @CurrentShop() shop: ShopResponseDto,
+  ) {
+    return this.productService.getProducts(shop.id, Number(page), Number(limit))
   }
 }
