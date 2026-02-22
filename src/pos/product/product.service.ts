@@ -31,4 +31,22 @@ export class ProductService {
       take: limit,
     })
   }
+
+  getProductById(productId: string, shopId: string) {
+    return this.prismaService.product.findFirstOrThrow({
+      where: {
+        id: productId,
+        shopId: shopId,
+      },
+    })
+  }
+
+  getProductByBarcode(barcode: string, shopId: string) {
+    return this.prismaService.product.findFirstOrThrow({
+      where: {
+        barcode: barcode,
+        shopId,
+      },
+    })
+  }
 }
