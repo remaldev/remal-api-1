@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 import { CurrentShop } from '../shop/shop.decorator'
 import { ShopResponseDto } from '../shop/shop.dto'
 import { ShopContextGuard } from '../shop/shop.guard'
@@ -29,5 +37,21 @@ export class ProductController {
     @CurrentShop() shop: ShopResponseDto,
   ) {
     return this.productService.getProducts(shop.id, Number(page), Number(limit))
+  }
+
+  @Get('/:productId')
+  findById(
+    @Param('productId') productId: string,
+    @CurrentShop() shop: ShopResponseDto,
+  ) {
+    return this.productService.getProductById(productId, shop.id)
+  }
+
+  @Get('/barcode/:barcode')
+  findByBarcode(
+    @Param('barcode') barcode: string,
+    @CurrentShop() shop: ShopResponseDto,
+  ) {
+    return this.productService.getProductByBarcode(barcode, shop.id)
   }
 }
