@@ -30,6 +30,7 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   Token      Token[]
+  shops      Shop[]
 }
 
 enum TokenType {
@@ -41,10 +42,40 @@ enum TokenType {
 model Token {
   token     String
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      TokenType
   expiresAt DateTime
 
   @@id([token, userId, type])
   @@unique([userId, type]) // ensure only one active token per user/type
+}
+
+model Shop {
+  id      String @id @default(cuid())
+  name    String
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([ownerId])
+}
+
+model Product {
+  id       String @id @default(cuid())
+  name     String
+  price    Float
+  barcode  String
+  quantity Int    @default(0)
+  shopId   String
+  shop     Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, barcode])
+  @@index([shopId])
 }

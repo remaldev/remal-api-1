@@ -85,18 +85,30 @@ describe('UserService', () => {
       expect(result).toBeNull()
     })
 
-    it('should return null when user is not found', async () => {
+    it('should mock getUserByEmail', async () => {
       // Arrange
       ;(prismaService.user.findUnique as jest.Mock).mockResolvedValue(mockUser)
 
       // Act
-      const result = await userService.getUserByEmail(mockUser.email)
+      let result = await userService.getUserByEmail(mockUser.email)
 
       // Assert
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: mockUser.email },
       })
       expect(result).toEqual(expectedUserResponse)
+      // -------------------------- NULL TEST --------------------------
+      // Arrange
+      ;(prismaService.user.findUnique as jest.Mock).mockResolvedValue(null)
+
+      // Act
+      result = await userService.getUserByEmail('invalid_email')
+
+      // Assert
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'invalid_email' },
+      })
+      expect(result).toBeNull()
     })
   })
 })

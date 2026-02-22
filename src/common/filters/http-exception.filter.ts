@@ -29,7 +29,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
     const request = ctx.getRequest<Request>()
-
     // Default error response structure
     let status = HttpStatus.INTERNAL_SERVER_ERROR
     let message = 'Internal server error'
@@ -53,6 +52,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = errorInfo.status
       message = errorInfo.message
       error = errorInfo.error
+    } else {
+      this.logger.fatal(exception)
     }
 
     this.logger.error(`${request.method} ${request.url} - ${status} ${message}`)

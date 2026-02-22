@@ -9,6 +9,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard'
 import configuration from './config/configuration'
 import { configValidationSchema } from './config/validation'
 import { MailerModule } from './mailer/mailer.module'
+import { PosModule } from './pos/pos.module'
 import { PrismaModule } from './prisma/prisma.module'
 import { UserModule } from './user/user.module'
 
@@ -29,6 +30,7 @@ import { UserModule } from './user/user.module'
     UserModule,
     MailerModule,
     AuthModule,
+    PosModule,
   ],
   controllers: [AppController],
   providers: [

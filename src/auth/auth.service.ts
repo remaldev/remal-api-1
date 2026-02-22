@@ -6,9 +6,11 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { TokenType } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
+import { StringValue } from 'ms'
 import { MailerService } from '../mailer/mailer.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { LoginDto } from './dto/login.dto'
@@ -20,15 +22,18 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name)
   private readonly mailerService: MailerService
   private readonly jwtService: JwtService
+  private readonly configService: ConfigService
 
   constructor(
     prismaService: PrismaService,
     mailerService: MailerService,
     jwtService: JwtService,
+    configService: ConfigService,
   ) {
     this.prismaService = prismaService
     this.mailerService = mailerService
     this.jwtService = jwtService
+    this.configService = configService
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -41,47 +46,65 @@ export class AuthService {
     return randomInt(100000, 1000000).toString()
   }
 
-  async signup(signupDto: SignupDto) {
+  async signup(signupDto: SignupDto, isVerified = false) {
     const { email, password, language } = signupDto
 
     const verificationToken = this.generateVerificationToken()
+    const hashedPassword = await this.hashPassword(password)
 
     try {
-      return await this.prismaService.$transaction(async (prisma) => {
-        const user = await prisma.user.create({
-          data: {
-            email,
-            password: await this.hashPassword(password),
-          },
-        })
-        const ten_minutes_in_ms = 10 * 60 * 1000 // 10 minutes in milliseconds
-        await prisma.token.create({
-          data: {
-            token: verificationToken,
-            type: TokenType.EMAIL_VERIFICATION,
-            userId: user.id,
-            expiresAt: new Date(Date.now() + ten_minutes_in_ms), // 10 minutes from now
-          },
-        })
+      const result = await this.prismaService.$transaction(
+        async (prisma) => {
+          const user = await prisma.user.create({
+            data: {
+              email,
+              password: hashedPassword,
+              isVerified,
+            },
+          })
+          const ten_minutes_in_ms = 10 * 60 * 1000 // 10 minutes in milliseconds
+          await prisma.token.create({
+            data: {
+              token: verificationToken,
+              type: TokenType.EMAIL_VERIFICATION,
+              userId: user.id,
+              expiresAt: new Date(Date.now() + ten_minutes_in_ms), // 10 minutes from now
+            },
+          })
 
-        this.logger.log(
-          `User created with ID: ${user.id} | Email: ${user.email} | Verification Token: ${verificationToken}`,
-        )
+          this.logger.log(
+            `User created with ID: ${user.id} | Email: ${user.email} | Verification Token: ${verificationToken}`,
+          )
 
-        await this.mailerService.sendVerificationCodeMail(
-          user.email,
-          language,
-          {
-            codeDigits: verificationToken.split(''),
-          },
-        )
+          return user
+        },
+        {
+          // Use a longer timeout for user creation transaction
+          timeout: 15000, // 15 seconds
+          maxWait: 10000, // wait up to 10s to acquire a connection
+        },
+      )
+      let verificationSent = false
 
-        return {
-          userId: user.id,
-          email: user.email,
-          verificationSent: true,
+      if (!isVerified) {
+        try {
+          await this.mailerService.sendVerificationCodeMail(
+            result.email,
+            language,
+            { codeDigits: verificationToken.split('') },
+          )
+          verificationSent = true
+        } catch (mailError) {
+          this.logger.error(
+            `Verification email failed for ${result.email}: ${mailError.message}`,
+          )
         }
-      })
+      }
+      return {
+        userId: result.id,
+        email: result.email,
+        verificationSent,
+      }
     } catch (error) {
       // Handle Prisma-specific errors and convert to HTTP exceptions
       if (error.code === 'P2002') {
@@ -229,9 +252,9 @@ export class AuthService {
 
   private generateTokens(userId: string, email: string, role: string) {
     const now = Math.floor(Date.now() / 1000)
-    const accessTokenExpiresIn = 15 * 60 // 15 minutes
+    const accessTokenExpiresIn =
+      this.configService.getOrThrow<StringValue>('JWT_EXPIRES')
     const refreshTokenExpiresIn = 7 * 24 * 60 * 60 // 7 days
-
     const accessTokenPayload = {
       sub: userId,
       email,
@@ -244,7 +267,6 @@ export class AuthService {
       type: 'refresh',
       iat: now,
     }
-
     const accessToken = this.jwtService.sign(accessTokenPayload, {
       expiresIn: accessTokenExpiresIn,
     })

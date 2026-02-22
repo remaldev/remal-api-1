@@ -1,0 +1,28 @@
+meta {
+  name: update
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{host}}/pos/products/cmlhaa7yo0000y2irmylq8jf8
+  body: json
+  auth: inherit
+}
+
+headers {
+  X-Shop-Id: cmlh5ux160009s8irq5bmqsg4
+}
+
+body:json {
+  {
+    "data": {
+      "quantity": 1337
+    }
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
